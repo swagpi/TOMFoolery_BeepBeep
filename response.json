@@ -1,0 +1,608 @@
+{
+  "type": "MapDataResponse",
+  "payload": {
+    "stops": [
+      {
+        "stop_id": 372638,
+        "stop_name": "Iselersheim Iseler Stra\u00dfe 118",
+        "latitude": 9.124919,
+        "longitude": 53.569355
+      },
+      {
+        "stop_id": 470666,
+        "stop_name": "Emmendingen Kreiskrankenhaus",
+        "latitude": 7.855372,
+        "longitude": 48.125675
+      },
+      {
+        "stop_id": 275263,
+        "stop_name": "Garz",
+        "latitude": 14.171705,
+        "longitude": 53.881073
+      },
+      {
+        "stop_id": 44170,
+        "stop_name": "Neum\u00fcnster Leinestra\u00dfe 39",
+        "latitude": 10.007829,
+        "longitude": 54.03956
+      },
+      {
+        "stop_id": 516565,
+        "stop_name": "Velbert, Pestalozzistra\u00dfe",
+        "latitude": 7.083908,
+        "longitude": 51.31386
+      },
+      {
+        "stop_id": 346528,
+        "stop_name": "Georgenhausen Seeg\u00e4rtchen VSpachbr\u00fccken",
+        "latitude": 8.806808,
+        "longitude": 49.8456
+      },
+      {
+        "stop_id": 285982,
+        "stop_name": "Fraunberg, Strognstra\u00dfe",
+        "latitude": 11.991485,
+        "longitude": 48.36821
+      },
+      {
+        "stop_id": 643864,
+        "stop_name": "Rothenfurth, Abzw",
+        "latitude": 12.033373,
+        "longitude": 49.958675
+      },
+      {
+        "stop_id": 645977,
+        "stop_name": "Jicin",
+        "latitude": 15.361308,
+        "longitude": 50.430546
+      },
+      {
+        "stop_id": 453738,
+        "stop_name": "Wettrup, Heidfeld Mast2",
+        "latitude": 7.588635,
+        "longitude": 52.588387
+      },
+      {
+        "stop_id": 2031,
+        "stop_name": "J\u00fcchen Markt",
+        "latitude": 6.504189,
+        "longitude": 51.101265
+      },
+      {
+        "stop_id": 198283,
+        "stop_name": "J\u00e4gersdorf",
+        "latitude": 11.688142,
+        "longitude": 48.479816
+      },
+      {
+        "stop_id": 195380,
+        "stop_name": "Kolmstra\u00dfe",
+        "latitude": 12.425714,
+        "longitude": 51.32027
+      },
+      {
+        "stop_id": 87314,
+        "stop_name": "Truchtelfingen Quellenstra\u00dfe",
+        "latitude": 9.026559,
+        "longitude": 48.242126
+      },
+      {
+        "stop_id": 234388,
+        "stop_name": "Peine, Gunzelin-Realschule",
+        "latitude": 10.24216,
+        "longitude": 52.325665
+      },
+      {
+        "stop_id": 504812,
+        "stop_name": "Erle, Lammersmannstr.",
+        "latitude": 6.870405,
+        "longitude": 51.74226
+      },
+      {
+        "stop_id": 317321,
+        "stop_name": "Sternhaus",
+        "latitude": 11.136256,
+        "longitude": 51.69002
+      },
+      {
+        "stop_id": 634747,
+        "stop_name": "Nidda Ludwigstra\u00dfe",
+        "latitude": 8.99777,
+        "longitude": 50.4081
+      },
+      {
+        "stop_id": 252200,
+        "stop_name": "Cuxhaven Pr\u00e4sident-Herwig-Str.",
+        "latitude": 8.70677,
+        "longitude": 53.864304
+      },
+      {
+        "stop_id": 28917,
+        "stop_name": "Neckarh. Stahlackerw",
+        "latitude": 9.290646,
+        "longitude": 48.749237
+      },
+      {
+        "stop_id": 54398,
+        "stop_name": "Frankenberg Kaserne",
+        "latitude": 8.78631,
+        "longitude": 51.038105
+      },
+      {
+        "stop_id": 159341,
+        "stop_name": "Tutzing, Fischergassl",
+        "latitude": 11.280873,
+        "longitude": 47.911346
+      },
+      {
+        "stop_id": 188062,
+        "stop_name": "Dudweiler",
+        "latitude": 7.027424,
+        "longitude": 49.277428
+      },
+      {
+        "stop_id": 567841,
+        "stop_name": "Cornau Niedermeyer",
+        "latitude": 8.457193,
+        "longitude": 52.668083
+      },
+      {
+        "stop_id": 214145,
+        "stop_name": "Steckenried",
+        "latitude": 10.213,
+        "longitude": 47.68543
+      },
+      {
+        "stop_id": 131428,
+        "stop_name": "Saal (Donau)",
+        "latitude": 11.933193,
+        "longitude": 48.902424
+      },
+      {
+        "stop_id": 212267,
+        "stop_name": "Zotzenbach, Ahornweg/Steinb\u00fchl",
+        "latitude": 8.761449,
+        "longitude": 49.60793
+      },
+      {
+        "stop_id": 371968,
+        "stop_name": "Hof bei Tiefenbach",
+        "latitude": 13.416339,
+        "longitude": 48.62902
+      },
+      {
+        "stop_id": 560106,
+        "stop_name": "Lohne, Lohner Klei Westerklei",
+        "latitude": 8.181667,
+        "longitude": 51.567146
+      },
+      {
+        "stop_id": 29485,
+        "stop_name": "Holdorf, As to Hus Pflegeheim",
+        "latitude": 8.128725,
+        "longitude": 52.592228
+      },
+      {
+        "stop_id": 346920,
+        "stop_name": "LS Hausener Str. (Bst. 2) -> LS Rathaus",
+        "latitude": 8.860054,
+        "longitude": 50.093357
+      },
+      {
+        "stop_id": 571344,
+        "stop_name": "Hofen Kirche",
+        "latitude": 7.749227,
+        "longitude": 47.689312
+      },
+      {
+        "stop_id": 122929,
+        "stop_name": "Gomaringen Friedhof",
+        "latitude": 9.092226,
+        "longitude": 48.451054
+      },
+      {
+        "stop_id": 89065,
+        "stop_name": "Armstorf(Niederelbe) Wald",
+        "latitude": 9.081978,
+        "longitude": 53.60747
+      },
+      {
+        "stop_id": 207917,
+        "stop_name": "Eberbach, Pleutersbach",
+        "latitude": 8.953535,
+        "longitude": 49.45408
+      },
+      {
+        "stop_id": 383781,
+        "stop_name": "Geestgottberg, Schule",
+        "latitude": 11.728492,
+        "longitude": 52.95545
+      },
+      {
+        "stop_id": 376864,
+        "stop_name": "Lirstal Abzw. Retterath",
+        "latitude": 7.031895,
+        "longitude": 50.257744
+      },
+      {
+        "stop_id": 38718,
+        "stop_name": "M\u00fclheim Sportanlage Wenderfeld",
+        "latitude": 6.90976,
+        "longitude": 51.461994
+      },
+      {
+        "stop_id": 14394,
+        "stop_name": "Strausberg, Lustgarten",
+        "latitude": 13.880585,
+        "longitude": 52.57593
+      },
+      {
+        "stop_id": 572301,
+        "stop_name": "Meiningen, Werrastra\u00dfe s",
+        "latitude": 10.413171,
+        "longitude": 50.560276
+      },
+      {
+        "stop_id": 197204,
+        "stop_name": "Rosseler Str., Emmersweiler",
+        "latitude": 6.85328,
+        "longitude": 49.189407
+      },
+      {
+        "stop_id": 276050,
+        "stop_name": "Polenz Schmiede",
+        "latitude": 14.180006,
+        "longitude": 51.02522
+      },
+      {
+        "stop_id": 460630,
+        "stop_name": "Sch\u00f6nberg (Meckl) GS/L\u00fcbecker Str.",
+        "latitude": 10.933063,
+        "longitude": 53.8487
+      },
+      {
+        "stop_id": 344652,
+        "stop_name": "Breitenberg Rabenbauer",
+        "latitude": 13.794152,
+        "longitude": 48.703987
+      },
+      {
+        "stop_id": 88180,
+        "stop_name": "Kalbitz",
+        "latitude": 11.559097,
+        "longitude": 51.190964
+      },
+      {
+        "stop_id": 324432,
+        "stop_name": "Vellmar-Niedervellmar Festplatz",
+        "latitude": 9.467647,
+        "longitude": 51.35762
+      },
+      {
+        "stop_id": 435163,
+        "stop_name": "Unterhaching, Sommerstra\u00dfe",
+        "latitude": 11.603521,
+        "longitude": 48.07555
+      },
+      {
+        "stop_id": 243250,
+        "stop_name": "Schemmerberg Raimling",
+        "latitude": 9.817903,
+        "longitude": 48.187576
+      },
+      {
+        "stop_id": 184657,
+        "stop_name": "Weiler Abzw. Weiler",
+        "latitude": 9.767131,
+        "longitude": 48.400993
+      },
+      {
+        "stop_id": 490856,
+        "stop_name": "D\u00fcrerplatz",
+        "latitude": 8.226328,
+        "longitude": 50.085606
+      },
+      {
+        "stop_id": 172847,
+        "stop_name": "Thalfang, KiTa Regenbogen",
+        "latitude": 7.001954,
+        "longitude": 49.752697
+      },
+      {
+        "stop_id": 351034,
+        "stop_name": "Beesenstedt, Eschenweg",
+        "latitude": 11.72885,
+        "longitude": 51.567333
+      },
+      {
+        "stop_id": 257264,
+        "stop_name": "Wilhelmshaven, Europaviertel Wilhelmshaven",
+        "latitude": 8.085518,
+        "longitude": 53.5282
+      },
+      {
+        "stop_id": 607381,
+        "stop_name": "S-Bf. Wahren",
+        "latitude": 12.323344,
+        "longitude": 51.38077
+      },
+      {
+        "stop_id": 152585,
+        "stop_name": "H\u00f6\u00dflinsw. W-parkpl. Rot. Stich",
+        "latitude": 9.463419,
+        "longitude": 48.823223
+      },
+      {
+        "stop_id": 533392,
+        "stop_name": "T\u00fcbingen F.-Dannenmann-Str.",
+        "latitude": 9.03883,
+        "longitude": 48.52513
+      },
+      {
+        "stop_id": 613902,
+        "stop_name": "Ro\u00dfwag Seem\u00fchle",
+        "latitude": 8.942603,
+        "longitude": 48.93749
+      },
+      {
+        "stop_id": 548784,
+        "stop_name": "Mechernich Eicks Gest\u00fct Rosenhof",
+        "latitude": 6.605474,
+        "longitude": 50.61824
+      },
+      {
+        "stop_id": 29388,
+        "stop_name": "Liebau, Warte",
+        "latitude": 12.169747,
+        "longitude": 50.569424
+      },
+      {
+        "stop_id": 397824,
+        "stop_name": "Wei\u00dfbach, Niederdorf",
+        "latitude": 13.027171,
+        "longitude": 50.73573
+      },
+      {
+        "stop_id": 85606,
+        "stop_name": "Eurasburg, Firma Hartmann",
+        "latitude": 11.081734,
+        "longitude": 48.335503
+      },
+      {
+        "stop_id": 200488,
+        "stop_name": "Bietikow, Dorf",
+        "latitude": 13.941246,
+        "longitude": 53.268444
+      },
+      {
+        "stop_id": 108848,
+        "stop_name": "Heringen Heringen Petersstra\u00dfe",
+        "latitude": 10.018892,
+        "longitude": 50.888947
+      },
+      {
+        "stop_id": 87196,
+        "stop_name": "Ilbesheim/Ld, Rathaus",
+        "latitude": 8.053801,
+        "longitude": 49.182636
+      },
+      {
+        "stop_id": 670898,
+        "stop_name": "Voigtei Oldenburg",
+        "latitude": 8.893985,
+        "longitude": 52.613686
+      },
+      {
+        "stop_id": 629538,
+        "stop_name": "Kirchenthumbach, Am Sandbrunnen",
+        "latitude": 11.724074,
+        "longitude": 49.754547
+      },
+      {
+        "stop_id": 66031,
+        "stop_name": "Ecknach, Kirche",
+        "latitude": 11.13372,
+        "longitude": 48.44362
+      },
+      {
+        "stop_id": 103818,
+        "stop_name": "Bihlerdorf, Marienbr\u00fccke",
+        "latitude": 10.257395,
+        "longitude": 47.52831
+      },
+      {
+        "stop_id": 320618,
+        "stop_name": "Quierschied Untere Brach B",
+        "latitude": 7.042393,
+        "longitude": 49.313972
+      },
+      {
+        "stop_id": 108064,
+        "stop_name": "Mosbach, Wilhelm-Schwarz-Str.",
+        "latitude": 9.154938,
+        "longitude": 49.352
+      },
+      {
+        "stop_id": 599255,
+        "stop_name": "Saarbr\u00fccker Stra\u00dfe",
+        "latitude": 8.138853,
+        "longitude": 53.526894
+      },
+      {
+        "stop_id": 258093,
+        "stop_name": "Wildau, Gewerbepark S\u00fcd",
+        "latitude": 13.595598,
+        "longitude": 52.320217
+      },
+      {
+        "stop_id": 545123,
+        "stop_name": "Bochum Krockhausstr.",
+        "latitude": 7.218206,
+        "longitude": 51.438274
+      },
+      {
+        "stop_id": 542036,
+        "stop_name": "Hemer, Ihmert Ringstra\u00dfe",
+        "latitude": 7.734836,
+        "longitude": 51.330193
+      },
+      {
+        "stop_id": 193338,
+        "stop_name": "Blankenloch Nord",
+        "latitude": 8.467367,
+        "longitude": 49.07328
+      },
+      {
+        "stop_id": 446273,
+        "stop_name": "Eiterbach, Fachklinik",
+        "latitude": 8.812509,
+        "longitude": 49.505165
+      },
+      {
+        "stop_id": 332768,
+        "stop_name": "Hovel, Ri. Farlage",
+        "latitude": 7.736624,
+        "longitude": 53.532475
+      },
+      {
+        "stop_id": 179211,
+        "stop_name": "Soderstorf, Hauptstra\u00dfe",
+        "latitude": 10.147068,
+        "longitude": 53.141506
+      },
+      {
+        "stop_id": 339057,
+        "stop_name": "Bad Driburg, Dringenberger Str",
+        "latitude": 9.018618,
+        "longitude": 51.733543
+      },
+      {
+        "stop_id": 572086,
+        "stop_name": "Neustadt (Cob.) Stadion",
+        "latitude": 11.133082,
+        "longitude": 50.334557
+      },
+      {
+        "stop_id": 425195,
+        "stop_name": "Werdau, Gartenanlage Stiefelknecht",
+        "latitude": 12.348628,
+        "longitude": 50.736454
+      },
+      {
+        "stop_id": 629243,
+        "stop_name": "Sinzig F\u00f6rderschule",
+        "latitude": 7.253851,
+        "longitude": 50.54683
+      },
+      {
+        "stop_id": 371332,
+        "stop_name": "Haldensleben, ZOB",
+        "latitude": 11.407745,
+        "longitude": 52.28464
+      },
+      {
+        "stop_id": 606728,
+        "stop_name": "Lk-Blasheim, Marktplatz",
+        "latitude": 8.587562,
+        "longitude": 52.3024
+      },
+      {
+        "stop_id": 259779,
+        "stop_name": "Sundern, In der Flamke",
+        "latitude": 8.022827,
+        "longitude": 51.348766
+      },
+      {
+        "stop_id": 542957,
+        "stop_name": "Jena, Ilmnitz",
+        "latitude": 11.649876,
+        "longitude": 50.88638
+      },
+      {
+        "stop_id": 147106,
+        "stop_name": "Pirmasens, Postcenter",
+        "latitude": 7.604913,
+        "longitude": 49.1972
+      },
+      {
+        "stop_id": 395640,
+        "stop_name": "Pei\u00dfenberg, Krankenhaus",
+        "latitude": 11.070748,
+        "longitude": 47.800186
+      },
+      {
+        "stop_id": 116869,
+        "stop_name": "Thurow B104",
+        "latitude": 11.68277,
+        "longitude": 53.729965
+      },
+      {
+        "stop_id": 195544,
+        "stop_name": "Hauptg\u00fcterbahnhof, Saarbr\u00fccken",
+        "latitude": 7.002918,
+        "longitude": 49.24312
+      },
+      {
+        "stop_id": 655958,
+        "stop_name": "Neubruchhausen, Hauptstra\u00dfe",
+        "latitude": 8.83028,
+        "longitude": 52.84011
+      },
+      {
+        "stop_id": 679669,
+        "stop_name": "Auhof (b. Hilpoltstein)",
+        "latitude": 11.20792,
+        "longitude": 49.19471
+      },
+      {
+        "stop_id": 448367,
+        "stop_name": "Maintal-Bischofsheim Gerhart-Hauptmann-Stra\u00dfe",
+        "latitude": 8.815067,
+        "longitude": 50.151974
+      },
+      {
+        "stop_id": 89483,
+        "stop_name": "K\u00fchnhaide, Gh Moosheide",
+        "latitude": 12.807461,
+        "longitude": 50.600327
+      },
+      {
+        "stop_id": 480183,
+        "stop_name": "Samern B\u00fctergerds",
+        "latitude": 7.248844,
+        "longitude": 52.29444
+      },
+      {
+        "stop_id": 27079,
+        "stop_name": "Zenger\u00f6d",
+        "latitude": 12.458645,
+        "longitude": 49.42434
+      },
+      {
+        "stop_id": 591084,
+        "stop_name": "Sinntal-Altengronau Hans-Elm-Schule",
+        "latitude": 9.616943,
+        "longitude": 50.251686
+      },
+      {
+        "stop_id": 550046,
+        "stop_name": "Bondorf Kindergarten",
+        "latitude": 9.531502,
+        "longitude": 48.019135
+      },
+      {
+        "stop_id": 599209,
+        "stop_name": "Solingen Bussche-Kessel-Weg",
+        "latitude": 7.002188,
+        "longitude": 51.154457
+      },
+      {
+        "stop_id": 563283,
+        "stop_name": "Kevelaer Wetten Schule",
+        "latitude": 6.28968,
+        "longitude": 51.56817
+      }
+    ],
+    "routes": []
+  }
+}
