@@ -1,0 +1,10 @@
+{
+  "type": "MapBoundsRequest",
+  "payload": {
+    "north": 51.0001,
+    "south": 50.9991,
+    "east": 8.0021,
+    "west": 8.0001,
+    "buffer_meters": 50
+  }
+}
