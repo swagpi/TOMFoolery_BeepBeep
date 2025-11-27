@@ -1,0 +1,45 @@
+{
+  "type": "MapDataResponse",
+  "payload": {
+    "stops": [
+      {
+        "stop_id": "1234",
+        "stop_name": "Central Station",
+        "latitude": 50.99955,
+        "longitude": 8.00122
+      },
+      {
+        "stop_id": "5678",
+        "stop_name": "Market Square",
+        "latitude": 50.99990,
+        "longitude": 8.00075
+      }
+    ],
+    "routes": [
+      {
+        "route_id": "R12",
+        "trip_id": "T12-01",
+        "stops": [
+          {
+            "stop_id": "1234"
+          },
+          {
+            "stop_id": "5678"
+          },
+          {
+            "stop_id": "9012"
+          }
+        ]
+      },
+      {
+        "route_id": "R15",
+        "trip_id": "T15-07",
+        "coordinates": [
+          { "latitude": 50.99955, "longitude": 8.00122 },
+          { "latitude": 50.99990, "longitude": 8.00075 },
+          { "latitude": 51.00010, "longitude": 8.00010 }
+        ]
+      }
+    ]
+  }
+}

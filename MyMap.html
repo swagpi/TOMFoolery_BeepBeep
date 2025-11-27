@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Map with Custom Zoom Buttons</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        /* Hide routing text instructions */
+        .leaflet-routing-container { display: none; }
+
+        /* --- MARKER STYLES --- */
+        .custom-bus-icon {
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: 2px solid white;  
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;          
+        }
+        .bus-active {
+            background-color: #ff0000; width: 24px !important; height: 24px !important;
+            margin-left: -12px !important; margin-top: -12px !important;
+        }
+        .bus-passive {
+            background-color: #808080; opacity: 0.9;
+            width: 20px !important; height: 20px !important;
+            margin-left: -10px !important; margin-top: -10px !important;
+            font-size: 10px;          
+        }
+
+        /* --- NEW: CUSTOM ZOOM BUTTON STYLES --- */
+        .custom-zoom-controls {
+            position: absolute;
+            bottom: 30px;  /* Distance from bottom */
+            right: 20px;   /* Distance from right */
+            z-index: 9999; /* Ensure it stays on top of the map */
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 10px; /* Space between buttons */
+        }
+
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            background-color: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .zoom-btn:active {
+            background-color: #f0f0f0;
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="map"></div>
+
+    <div class="custom-zoom-controls">
+        <button class="zoom-btn" onclick="map.zoomIn()">+</button>
+        <button class="zoom-btn" onclick="map.zoomOut()">-</button>
+    </div>
+    <script>
+        // --- 1. ICONS ---
+        var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '🚌', iconSize: [24, 24] });
+        var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '🚌', iconSize: [20, 20] });
+
+        function createUserMarker(latlng) {
+            return L.circleMarker(latlng, {
+                radius: 8, fillColor: "#2196F3", color: "#FFF", weight: 2, fillOpacity: 1
+            });
+        }
+
+        // --- 2. MAP SETUP ---
+        var map = L.map('map', {
+            dragging: true, 
+            tap: true, 
+            zoomControl: false // Disable default Leaflet zoom control
+        }).setView([0,0], 1);
+
+        L.tileLayer('https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=Kd8toTEa81uyT4MJIWKx',{
+            attribution: '&copy; MapTiler &copy; OpenStreetMap',
+            noWrap: true
+        }).addTo(map);
+
+        var userLatLng = null;
+        var allStopsData = []; 
+        var routeControls = []; 
+        var destinationMarker = null;
+        var userMarker = null;
+
+        // --- 3. GET LOCATION ---
+        navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
+
+        function success(position) {
+            userLatLng = L.latLng(position.coords.latitude, position.coords.longitude); 
+            map.setView(userLatLng, 15);
+            userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
+            
+            generateStaticMockStops(userLatLng);
+            logBoundsForBackend();
+        }
+
+        function error() { alert("Location could not be retrieved."); }
+
+        // --- 4. BACKEND LOGIC ---
+        map.on('moveend', function() { logBoundsForBackend(); });
+
+        function logBoundsForBackend() {
+            var bounds = map.getBounds();
+            var requestData = {
+                topLeft: bounds.getNorthWest(),
+                bottomRight: bounds.getSouthEast()
+            };
+            console.log("📡 Sending Bounds to Backend:", requestData);
+        }
+
+        // --- 5. STATIC MOCK DATA ---
+        function generateStaticMockStops(center) {
+            for (let i = 0; i < 30; i++) { 
+                let latOffset = (Math.random() - 0.5) * 0.04;
+                let lngOffset = (Math.random() - 0.5) * 0.04;
+                let stopPos = L.latLng(center.lat + latOffset, center.lng + lngOffset);
+                let marker = L.marker(stopPos, {icon: iconBusGray}).addTo(map);
+                allStopsData.push({ id: i, latLng: stopPos, marker: marker });
+            }
+        }
+
+        function findNearestStop(targetLatLng) {
+            let nearest = null;
+            let minDist = Infinity;
+            allStopsData.forEach(stop => {
+                let dist = targetLatLng.distanceTo(stop.latLng);
+                if (dist < minDist) { minDist = dist; nearest = stop; }
+            });
+            return nearest;
+        }
+
+        function clearRoutes() {
+            routeControls.forEach(rc => map.removeControl(rc));
+            routeControls = [];
+            if (destinationMarker) map.removeLayer(destinationMarker);
+            allStopsData.forEach(stop => {
+                stop.marker.setIcon(iconBusGray);
+                stop.marker.setZIndexOffset(0); 
+            });
+        }
+
+        // --- 6. CLICK & LOGIC ---
+        map.on('click', function(e) {
+            if (!userLatLng || allStopsData.length === 0) return;
+
+            clearRoutes(); 
+
+            var destLatLng = e.latlng;
+            destinationMarker = L.marker(destLatLng).addTo(map).bindPopup("<b>Destination</b>").openPopup();
+
+            var distDirect = userLatLng.distanceTo(destLatLng);
+            
+            var startStop = findNearestStop(userLatLng);
+            var endStop = findNearestStop(destLatLng);
+            
+            if (!startStop) return;
+
+            var distToFirstStop = userLatLng.distanceTo(startStop.latLng);
+
+            // Decision: Walk or Bus?
+            if (distDirect < distToFirstStop || distDirect < 800) {
+                // Direct Walk
+                createRoute(userLatLng, destLatLng, 
+                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 
+                    'walking');
+            } else {
+                // Bus Trip
+                startStop.marker.setIcon(iconBusRed);
+                startStop.marker.setZIndexOffset(1000); 
+                endStop.marker.setIcon(iconBusRed);
+                endStop.marker.setZIndexOffset(1000);
+
+                // 1. Walk
+                createRoute(userLatLng, startStop.latLng, 
+                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
+
+                // 2. Bus
+                if (startStop.id !== endStop.id) {
+                    createRoute(startStop.latLng, endStop.latLng, 
+                        [{color: 'green', opacity: 0.8, weight: 7}], 'driving');
+                }
+
+                // 3. Walk
+                createRoute(endStop.latLng, destLatLng, 
+                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
+            }
+            
+             var bounds = L.latLngBounds([userLatLng, destLatLng]);
+             map.fitBounds(bounds, {padding: [50, 50]});
+        });
+
+        function createRoute(start, end, styleStyles, mode) {
+            var control = L.Routing.control({
+                waypoints: [start, end],
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    profile: mode 
+                }),
+                routeWhileDragging: false,
+                addWaypoints: false,
+                draggableWaypoints: false,
+                fitSelectedRoutes: false, 
+                show: false, 
+                createMarker: function() { return null; }, 
+                lineOptions: { styles: styleStyles }
+            }).addTo(map);
+            routeControls.push(control);
+        }
+    </script>
+</body>
+</html>
