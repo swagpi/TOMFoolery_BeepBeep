@@ -1,0 +1,117 @@
+/* --- 🎨 PALETTE --- */
+:root {
+    --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
+    --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
+    --bg-gray: #f3f4f6;
+}
+
+@font-face {
+    font-family: 'ZTNature-Medium';
+    src: url('ZTNature-Medium.ttf') format('truetype');
+    font-weight: normal; font-style: normal;
+}
+
+body {
+    margin: 0; padding: 0;
+    font-family: 'ZTNature-Medium', sans-serif;
+    background: var(--bg-gray);
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh;
+}
+
+.map-card {
+    position: relative; width: min(1400px, 98vw); height: min(820px, 95vh);
+    background: #ffffff; border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    padding: 8px; box-sizing: border-box;
+    display: flex; flex-direction: column; gap: 6px;
+}
+
+.map-inner { position: relative; flex: 1; border-radius: 10px; overflow: hidden; }
+#map { width: 100%; height: 100%; z-index: 1; }
+
+/* Visual feedback when disabled */
+.map-disabled { cursor: not-allowed !important; }
+
+.leaflet-routing-container { display: none; }
+
+/* --- NEW LOGO STYLE --- */
+/* The old .brand-badge class is replaced by this for the image */
+.brand-logo {
+    position: absolute;
+    top: 20px;
+    right: 26px;
+    z-index: 9999;
+    /* Adjust size as needed, this is a starting point */
+    width: 180px; /* Or use height: ...px */
+    height: auto;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
+}
+/* DELETED OLD BRAND-BADGE CSS FOR CLEANLINESS */
+
+
+/* Controls */
+.map-toolbar-container { position: absolute; top: 20px; left: 20px; z-index: 9999; width: 340px; }
+.map-toolbar {
+    display: flex; gap: 8px; padding: 8px;
+    background-color: var(--jade); border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+#search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+#search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; }
+
+#search-results-dropdown {
+    margin-top: 5px; width: 100%; background: white;
+    border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    max-height: 350px; overflow-y: auto; display: none; 
+}
+.search-suggestion-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #eee; }
+.search-suggestion-item:hover { background-color: #f0f0f0; }
+
+.custom-zoom-controls {
+    position: absolute; bottom: 30px; right: 20px; z-index: 9999; 
+    display: flex; flex-direction: column; gap: 10px; 
+}
+.zoom-btn {
+    width: 45px; height: 45px; background-color: white;
+    border: 2px solid #ccc; border-radius: 50%;
+    font-size: 24px; font-weight: bold; color: #333; cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+}
+.zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
+
+/* Active/Inactive styles for the toggle button */
+#toggle-label-btn.disabled-mode { background-color: #ffdddd; color: #c0392b; border-color: #e74c3c; }
+
+/* Sidebar */
+.sidebar {
+    position: absolute; top: 80px; left: 20px; bottom: 40px; 
+    width: 340px; background: white; z-index: 2000; 
+    border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transform: translateX(-380px); transition: transform 0.3s ease-in-out;
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.sidebar.open { transform: translateX(0); }
+.sidebar-header { background: var(--teal); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--sun); }
+.sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; }
+.trip-card { background: white; border-left: 5px solid var(--coral); border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+.trip-route { font-weight: bold; color: var(--dark-teal); font-size: 16px; }
+.trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
+.no-data { text-align: center; color: #999; margin-top: 20px; }
+
+/* Custom Styles */
+.custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
+.bus-active { background-color: var(--coral); }
+.bus-passive { background-color: var(--sun); }
+
+.leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+.leaflet-popup-content { margin: 10px 14px; font-size: 14px; color: #333; text-align: center; font-weight: bold; }
+.leaflet-popup-tip-container { display: none; } 
+a.leaflet-popup-close-button { display: none; } 
+
+/* --- HIDE LOGIC --- */
+.hide-routes .destination-pin { display: none !important; }
+.hide-routes .leaflet-routePane-pane { display: none !important; }
+
+
