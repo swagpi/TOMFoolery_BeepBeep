@@ -3,7 +3,7 @@ import zipfile
 import os
 
 def download_gtfs_data(url: str="https://download.gtfs.de/germany/free/latest.zip",
-                       filename: str="de_full.zip",
+                       filename: str="latest.zip",
                        keep_zip: bool = False):
     """
     fetches base gtfs data
