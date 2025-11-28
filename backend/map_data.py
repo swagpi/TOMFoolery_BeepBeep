@@ -104,7 +104,7 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     north, south, east, west = bounds["north"], bounds["south"], bounds["east"], bounds["west"]
     buffer_meters = bounds.get("buffer_meters", 0)
 
-    if north-south > 0.1:
+    if north-south > 0.2:
         return {"type": "MapDataResponse", "payload": {"stops": [], "routes": []}}
 
 
@@ -137,6 +137,9 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     #stops = random.sample(all_stops, max_stops) if len(all_stops) > max_stops else all_stops
     stops = all_stops
     stop_ids_in_area = {s["stop_id"] for s in stops}
+    routes = []
+
+    return {"type": "MapDataResponse", "payload": {"stops": stops, "routes": routes}}
 
     # Temp table for sampled stops
     cur.execute("CREATE TEMP TABLE tmp_stops(stop_id INT)")
