@@ -7,3 +7,6 @@ After = network-online.target
 User = tomfoolery
 Type = oneshot
 ExecStart = /bin/bash /home/tomfoolery/TOMFoolery_BeepBeep/scripts/pull_data.sh
+
+[Install]
+WantedBy = multi-user.target
