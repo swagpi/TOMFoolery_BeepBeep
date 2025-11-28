@@ -10,7 +10,7 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* ---  PALETTE --- */
+        /* --- 🎨 PALETTE --- */
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
@@ -48,19 +48,11 @@
         .leaflet-routing-container { display: none; }
 
         /* --- NEW LOGO STYLE --- */
-        /* The old .brand-badge class is replaced by this for the image */
         .brand-logo {
-            position: absolute;
-            top: 20px;
-            right: 26px;
-            z-index: 9999;
-            /* Adjust size as needed, this is a starting point */
-            width: 180px; /* Or use height: ...px */
-            height: auto;
+            position: absolute; top: 20px; right: 26px; z-index: 9999;
+            width: 180px; height: auto;
             filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.15));
         }
-        /* DELETED OLD BRAND-BADGE CSS FOR CLEANLINESS */
-
 
         /* Controls */
         .map-toolbar-container { position: absolute; top: 20px; left: 20px; z-index: 9999; width: 340px; }
@@ -93,7 +85,6 @@
         }
         .zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
         
-        /* Active/Inactive styles for the toggle button */
         #toggle-label-btn.disabled-mode { background-color: #ffdddd; color: #c0392b; border-color: #e74c3c; }
 
         /* Sidebar */
@@ -107,7 +98,15 @@
         .sidebar.open { transform: translateX(0); }
         .sidebar-header { background: var(--teal); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--sun); }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; }
-        .trip-card { background: white; border-left: 5px solid var(--coral); border-radius: 6px; padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; }
+        
+        .trip-card { 
+            background: white; border-left: 5px solid var(--coral); border-radius: 6px; 
+            padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .trip-card:hover { background-color: #e0f7fa; border-left-color: var(--teal); }
+
         .trip-route { font-weight: bold; color: var(--dark-teal); font-size: 16px; }
         .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
         .no-data { text-align: center; color: #999; margin-top: 20px; }
@@ -116,6 +115,8 @@
         .custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
+        /* Style for stops on the active route line */
+        .bus-route-stop { background-color: var(--teal); border: 2px solid #fff; z-index: 1000 !important; }
 
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
         .leaflet-popup-content { margin: 10px 14px; font-size: 14px; color: #333; text-align: center; font-weight: bold; }
@@ -132,7 +133,6 @@
 
     <div class="map-card">
         <img src="logo.png" alt="Beep Beep Logo" class="brand-logo">
-
         <div class="map-inner" id="map-wrapper">
             
             <div class="map-toolbar-container">
@@ -170,11 +170,13 @@
         const ABSOLUTE_MIN_WALK = 200; 
 
         // --- STATE ---
-        let isPathfindingActive = true; // Defaults to ON
+        let isPathfindingActive = true; 
+        let activeTripPolyline = null; // Store the trip line to remove it later
 
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
-        
+        var iconBusTeal = L.divIcon({ className: 'custom-bus-icon bus-route-stop', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
+
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
             html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, 
@@ -212,7 +214,13 @@
             if(userMarker) map.removeLayer(userMarker); userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
             fetchMapDataFromBackend();
         }
-        function closeSidebar() { document.getElementById('info-sidebar').classList.remove('open'); }
+        
+        function closeSidebar() { 
+            document.getElementById('info-sidebar').classList.remove('open'); 
+            // If we are viewing a trip, clicking close could potentially reset the map, 
+            // but keeping it visible allows user to explore the route.
+        }
+        
         function formatTime(t) { if(!t || t.length<4) return t; return t.substring(0,2)+":"+t.substring(2,4); }
 
         async function openStopSidebar(stopId, stopName) {
@@ -230,6 +238,8 @@
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
                         const item = document.createElement('div'); item.className = 'trip-card';
+                        // Add click event to visualize trip
+                        item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
                         item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
                         listEl.appendChild(item);
                     });
@@ -237,10 +247,63 @@
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
-        map.on('moveend', function() { fetchMapDataFromBackend(); });
+        // --- NEW FUNCTION: VISUALIZE TRIP ---
+        async function visualizeTrip(stopId, tripId) {
+            if (!isPathfindingActive) return; // Respect the toggle
+
+            try {
+                // 1. Fetch route details
+                const response = await fetch(`${BACKEND_URL}/routes_for_stop?stop_id=${stopId}`);
+                const tripsData = await response.json();
+                
+                // 2. Find the specific trip
+                const targetTrip = tripsData.find(t => t.trip_id == tripId);
+                
+                if (!targetTrip || !targetTrip.full_route_stops) {
+                    alert("Route path not found for this trip.");
+                    return;
+                }
+
+                // 3. CLEAR EVERYTHING
+                clearRoutes(); // Clears navigation paths
+                stopsLayerGroup.clearLayers(); // Clears all map stops
+                if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+
+                // 4. Draw the Path (Polyline)
+                const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
+                
+                activeTripPolyline = L.polyline(pathCoordinates, {
+                    color: 'var(--jade)', // Green
+                    weight: 6,
+                    opacity: 0.9,
+                    pane: 'routePane' // Important: put in the toggleable pane
+                }).addTo(map);
+
+                map.fitBounds(activeTripPolyline.getBounds(), {padding: [50, 50]});
+
+                // 5. Add markers ONLY for stops in this trip
+                targetTrip.full_route_stops.forEach(stop => {
+                    let marker = L.marker([stop.lat, stop.lon], {icon: iconBusTeal});
+                    marker.bindPopup(`<b>${stop.name}</b><br>Seq: ${stop.sequence}`);
+                    stopsLayerGroup.addLayer(marker);
+                });
+
+            } catch(e) {
+                console.error("Error visualising trip:", e);
+            }
+        }
+
+        map.on('moveend', function() { 
+            // Only fetch regular map data if we are NOT viewing a specific trip path
+            if (!activeTripPolyline) {
+                fetchMapDataFromBackend(); 
+            }
+        });
 
         async function fetchMapDataFromBackend() {
-            if(USE_MOCK_DATA) return;
+            if(USE_MOCK_DATA || !isPathfindingActive) return;
+            if (activeTripPolyline) return; // Don't overwrite trip view
+
             const bounds = map.getBounds();
             const requestBody = {
                 north: bounds.getNorth(), south: bounds.getSouth(), east: bounds.getEast(), west: bounds.getWest(),
@@ -260,18 +323,20 @@
                 let marker = L.marker(stopPos, {icon: iconBusGray});
                 marker.bindPopup(stopData.stop_name, { offset: [0, -10], autoPan: true });
                 
-                // UPDATED MARKER CLICK LOGIC
                 marker.on('click', function(e) { 
                     L.DomEvent.stopPropagation(e); 
-                    
-                    // Always open sidebar logic for info
+                    // Always open sidebar
                     openStopSidebar(stopData.stop_id, stopData.stop_name);
                     
-                    // Only draw route if active
                     if (isPathfindingActive) {
+                        // If we are in "Trip View", clicking another stop should reset and calculate route
+                        if (activeTripPolyline) {
+                             // Reset trip view
+                             if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                             fetchMapDataFromBackend(); // Reload normal stops
+                        }
                         processJourney(e.latlng, true, stopData.stop_id); 
                     } else {
-                        // If inactive, we still ensure map is clean of previous routes
                         clearRoutes();
                     }
                 });
@@ -292,6 +357,10 @@
             routeControls.forEach(rc => map.removeControl(rc)); routeControls = [];
             if (destinationMarker) map.removeLayer(destinationMarker);
             
+            // If we have a trip line, clear it
+            if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+            
+            // Reset icons
             allStopsData.forEach(stop => { stop.marker.setIcon(iconBusGray); stop.marker.setZIndexOffset(0); });
         }
 
@@ -299,25 +368,25 @@
         map.on('click', function(e) {
             document.getElementById('search-results-dropdown').style.display = 'none';
             
-            // Check if clicked near a stop
+            // If in trip view, clicking map resets to normal view
+            if (activeTripPolyline) {
+                if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                fetchMapDataFromBackend();
+                closeSidebar();
+                return;
+            }
+
+            if (!isPathfindingActive) return; 
+
             var result = findNearestStop(e.latlng);
             var isSnapped = (result.stop && result.distance < SNAP_RADIUS_METERS);
 
             if (isSnapped) {
-                // Clicked on/near a stop -> Show info (Always allowed)
                 openStopSidebar(result.stop.stop_id, result.stop.stop_name);
-                
-                if(isPathfindingActive) {
-                    processJourney(result.stop.latLng, true, result.stop.stop_id);
-                } else {
-                    clearRoutes(); // Clean up if off
-                }
+                if(isPathfindingActive) processJourney(result.stop.latLng, true, result.stop.stop_id);
+                else clearRoutes();
             } else {
-                // Clicked on empty space -> Destination selection
-                // BLOCK if pathfinding disabled
-                if (isPathfindingActive) {
-                    processJourney(e.latlng, false, null);
-                }
+                if (isPathfindingActive) processJourney(e.latlng, false, null);
             }
         });
 
@@ -347,8 +416,8 @@
                 if (distDirect > ABSOLUTE_MIN_WALK && distDirect > (d1+d2)) useBus = true;
             }
 
-            var walkStyles = [ { color: '#6E8F72', opacity: 1, weight: 7 }, { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10' } ];
-            var busStyles = [ { color: '#054A52', opacity: 0.8, weight: 8 }, { color: '#23CED9', opacity: 1, weight: 4 } ];
+            var walkStyles = [ { color: '#6E8F72', opacity: 1, weight: 7, className: 'routing-line' }, { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10', className: 'routing-line' } ];
+            var busStyles = [ { color: '#054A52', opacity: 0.8, weight: 8, className: 'routing-line' }, { color: '#23CED9', opacity: 1, weight: 4, className: 'routing-line' } ];
 
             if (!useBus) {
                 createRoute(userLatLng, destLatLng, walkStyles, 'walking');
@@ -375,40 +444,30 @@
             routeControls.push(control);
         }
 
-        // --- TOGGLE BUTTON LOGIC (NEW STATE MANAGEMENT) ---
+        // --- TOGGLE BUTTON ---
         const toggleBtn = document.getElementById('toggle-label-btn');
         const mapWrapper = document.getElementById('map-wrapper');
 
         toggleBtn.addEventListener('click', function() {
-            // 1. Flip State
             isPathfindingActive = !isPathfindingActive;
-            
-            // 2. Apply State
             if (!isPathfindingActive) {
-                // DISABLED MODE
-                clearRoutes(); // Wipe everything immediately
-                
-                // Visual Feedback
-                toggleBtn.innerHTML = "🚫"; 
-                toggleBtn.classList.add('disabled-mode');
-                mapWrapper.classList.add('hide-routes'); // Backup CSS hiding
-                closeSidebar();
+                clearRoutes(); 
+                if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; fetchMapDataFromBackend(); }
+                toggleBtn.innerHTML = "🚫"; toggleBtn.classList.add('disabled-mode');
+                mapWrapper.classList.add('hide-routes'); closeSidebar();
             } else {
-                // ACTIVE MODE
-                toggleBtn.innerHTML = "👁️";
-                toggleBtn.classList.remove('disabled-mode');
+                toggleBtn.innerHTML = "👁️"; toggleBtn.classList.remove('disabled-mode');
                 mapWrapper.classList.remove('hide-routes');
-                
-                const pane = map.getPane('routePane');
-                pane.style.display = 'block'; 
+                const pane = map.getPane('routePane'); pane.style.display = 'block'; 
             }
         });
 
-        // --- SEARCH LOGIC ---
+        // --- SEARCH ---
         const searchInput = document.getElementById('search-input');
         const searchDropdown = document.getElementById('search-results-dropdown');
         let debounceTimer;
         searchInput.addEventListener('input', function(e) {
+            if (!isPathfindingActive) return;
             const query = e.target.value.trim(); searchDropdown.innerHTML = '';
             if (query.length < 3) { searchDropdown.style.display = 'none'; return; }
             clearTimeout(debounceTimer);
@@ -431,6 +490,7 @@
         });
 
         async function selectSearchResult(item, type) {
+            if (!isPathfindingActive) return;
             searchInput.value = type==='stop'?item.stop_name:item.display_name.split(',')[0];
             searchDropdown.style.display = 'none';
             const lat=parseFloat(item.lat||item.latitude); const lon=parseFloat(item.lon||item.longitude);
@@ -438,21 +498,12 @@
             
             if(type==='stop') { 
                 map.setView(t,16); 
-                
-                // Always open sidebar for stops
                 openStopSidebar(item.stop_id,item.stop_name);
-                
-                // Only route if active
-                if(isPathfindingActive) {
-                    processJourney(t,true,item.stop_id); 
-                } else {
-                    clearRoutes();
-                }
+                if(isPathfindingActive) processJourney(t,true,item.stop_id); 
+                else clearRoutes();
             }
             else {
-                // Places: Block if pathfinding disabled
                 if(!isPathfindingActive) return;
-
                 map.setView(t,16);
                 try {
                     const res = await fetch(`${BACKEND_URL}/map_data`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({north:t.lat+0.01, south:t.lat-0.01, east:t.lng+0.01, west:t.lng-0.01, buffer_meters:200, max_stops:100}) });

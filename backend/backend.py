@@ -85,8 +85,9 @@ def station_info_endpoint(stop_id: str):
         print(f"❌ Error in /station_info: {e}")
         return {"error": str(e), "next_trips": []}
 
+
 @app.get("/routes_for_stop")
-def routes_for_stop_api(stop_id: int):
+def routes_for_stop_api(stop_id: str):
     print(f"🛣️ Route Request for stop_id={stop_id}")
     try:
         data = get_routes_for_stop(stop_id)
@@ -94,6 +95,7 @@ def routes_for_stop_api(stop_id: int):
     except Exception as e:
         print(f"❌ Error in /routes_for_stop: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Health Check
 @app.get("/health")
