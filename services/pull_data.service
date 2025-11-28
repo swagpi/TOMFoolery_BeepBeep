@@ -1,0 +1,11 @@
+[Unit]
+Wants=network_online.target
+After=network_online.target
+
+[Service]
+User = tomfoolery
+Type = once
+RunStart = /bin/bash /home/tomfoolery/TOMFoolery_BeepBeep/scripts/pull_data.sh
+
+[Install]
+WantedBy = mutli-user.target

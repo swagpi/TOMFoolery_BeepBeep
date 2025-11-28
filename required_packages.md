@@ -3,4 +3,5 @@
 - python3
 - rust
 - sqlite
+- unzip
 

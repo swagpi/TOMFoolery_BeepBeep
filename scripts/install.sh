@@ -2,19 +2,27 @@
 
 set -e
 
-CURRENT_DIR=$PWD
+CURRENT_DIR=$HOME/TOMFoolery_BeepBeep
 SERVICE_DIR=$CURRENT_DIR/services
 USER_SERVICE_DIR=$HOME/.config/systemd/user
-SERVICES=$(find "$SERVICE_DIR" -name "*.service")
+SERVICES=$(find "$SERVICE_DIR")
+
+RUST_DIR=rust
+
+if ! [[ -d $DB_DIR ]]; then
+    mkdir -p $DB_DIR
+fi
+
+pushd "$RUST_DIR"
+    cargo build --release 
+    cp target/release/tomfoolery $DB_DIR/tomfoolery
+popd
+
 
 if ! [[ -d $USER_SERVICE_DIR ]]; then
     echo "creating user service dir"
     mkdir -p "$USER_SERVICE_DIR"
 fi
-
-# echo "Reloading systemd daemon..."
-# sudo systemctl daemon-reexec
-# sudo systemctl daemon-reload
 
 for SERVICE in $SERVICES; do
     if ! [[ -f "$USER_SERVICE_DIR/$(basename $SERVICE)" ]]; then
@@ -23,9 +31,10 @@ for SERVICE in $SERVICES; do
     fi
 done
 
-for SERVICE in $SERVICES; do
-    echo "Enabling: $(basename "$SERVICE")"
-    systemctl --user enable "$(basename $SERVICE)"
-    systemctl --user start "$(basename $SERVICE)"
-    echo "Enabled: $(basename $SERVICE)"
-done
+systemctl --user import-environment DB_DIR
+
+systemctl --user enable backend.service
+systemctl --user start backend.service
+
+systemctl --user enable pull_data.timer
+systemctl --user start pull_data.timer

@@ -1,0 +1,10 @@
+[Unit]
+Description = Fetches data from the backend every week
+After = network_online.target
+
+[Timer]
+OnCalendar = Weekly
+Persistent = True
+
+[Install]
+WantedBy=timers.target backend.service
