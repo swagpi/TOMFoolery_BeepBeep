@@ -9,6 +9,6 @@ TMP_DATA=/tmp/data.zip
 cd "$DB_DIR"
 
 curl "https://download.gtfs.de/germany/free/latest.zip" -o "$TMP_DATA"
-unzip "$TMP_DATA" -d "$OUT_DIR"
+unzip -of "$TMP_DATA" -d "$OUT_DIR"
 
 ./tomfoolery

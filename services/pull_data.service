@@ -4,7 +4,6 @@ Wants = network-online.target
 After = network-online.target
 
 [Service]
-User = tomfoolery
 Type = oneshot
 ExecStart = /bin/bash /home/tomfoolery/TOMFoolery_BeepBeep/scripts/pull_data.sh
 

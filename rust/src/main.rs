@@ -179,7 +179,7 @@ fn load_stops(tx: &Transaction) -> Result<(), Box<dyn Error>> {
 // Main
 // -------------------------
 fn main() {
-    const DB_FILE: &str = "database.db";
+    const DB_FILE: &str = "/database.db";
     let mut base_path = std::env::var("DB_DIR").unwrap().to_string();
     base_path.push_str(DB_FILE);
 

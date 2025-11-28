@@ -3,9 +3,9 @@
 set -e
 env -i
 
-PORT=6666
-# cd $HOME/TOMFoolery_BeepBeep/backend
-cd $HOME/gits/TOMFoolery_BeepBeep/backend // TODO: Remove this line!
+PORT=62260
+cd $HOME/TOMFoolery_BeepBeep/backend
+# cd $HOME/gits/TOMFoolery_BeepBeep/backend # TODO: Remove this line!
 echo $PWD
 
 python3 -m venv .venv

@@ -1,5 +1,4 @@
 import sqlite3
-import random
 import time
 
 def initialize_db(db_path: str):
@@ -108,7 +107,7 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
         return {"type": "MapDataResponse", "payload": {"stops": [], "routes": []}}
 
 
-    print(f"North {north}, South {south}, West {west}, east {east}")
+    #print(f"North {north}, South {south}, West {west}, east {east}")
 
     # Convert buffer meters to degrees
     deg_buf = buffer_meters / 111_320
@@ -137,6 +136,9 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     #stops = random.sample(all_stops, max_stops) if len(all_stops) > max_stops else all_stops
     stops = all_stops
     stop_ids_in_area = {s["stop_id"] for s in stops}
+    routes = []
+
+    return {"type": "MapDataResponse", "payload": {"stops": stops, "routes": routes}}
 
     # Temp table for sampled stops
     cur.execute("CREATE TEMP TABLE tmp_stops(stop_id INT)")

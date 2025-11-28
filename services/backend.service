@@ -1,15 +1,12 @@
 [Unit]
 Description = The BeepBeep backend
-After = network-online.target pull_data.service
-Requires = pull_data.service
-StartLimitIntervalSec = 10
+After = network-online.target
 
 [Service]
 Type= simple
 Restart = always
 RestartSec = 5
-User = tomfoolery
 ExecStart = /bin/bash /home/tomfoolery/TOMFoolery_BeepBeep/scripts/start_backend.sh
 
 [Install]
-WantedBy = multi-user.target
+WantedBy = default.target
