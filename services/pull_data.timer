@@ -1,6 +1,5 @@
 [Unit]
 Description = Fetches data from the backend every week
-Requires = pull_data.service
 
 [Timer]
 OnCalendar = Weekly
