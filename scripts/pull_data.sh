@@ -1,9 +1,10 @@
 #!/bin/bash
 
+env -i
+set -e
+
 OUT_DIR="$DB_DIR/data"
 TMP_DATA=/tmp/data.zip
-
-set -e
 
 cd "$DB_DIR"
 

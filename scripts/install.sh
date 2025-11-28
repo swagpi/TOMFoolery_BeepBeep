@@ -1,5 +1,6 @@
 #!/bin/bash
 
+env -i
 set -e
 
 CURRENT_DIR=$HOME/TOMFoolery_BeepBeep
