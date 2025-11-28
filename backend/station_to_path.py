@@ -1,6 +1,16 @@
 import sqlite3
+from typing import Optional
+import os
 
-DB_PATH = "tomfoolery-rs-main/database.db"
+DB_FILE_NAME: str = "/database.db"
+def getDBPath() -> str:
+    db_env: Optional[str] = os.getenv("DB_DIR")
+    if db_env is None:
+        return "tomfoolery-rs-main/database.db"
+    else:
+        return db_env + DB_FILE_NAME
+
+DB_PATH = getDBPath()
 
 
 def get_routes_for_stop(stop_id):

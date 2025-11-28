@@ -4,9 +4,18 @@ from io import StringIO
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+from typing import Optional
+import os
 
+DB_FILE_NAME: str = "/database.db"
+def getDBPath() -> str:
+    db_env: Optional[str] = os.getenv("DB_DIR")
+    if db_env is None:
+        return "tomfoolery-rs-main/database.db"
+    else:
+        return db_env + DB_FILE_NAME
 
-DB_PATH = "tomfoolery-rs-main/database.db"
+DB_PATH: str = getDBPath()
 
 def parse_timestamp(ts: str):
     if not ts:
