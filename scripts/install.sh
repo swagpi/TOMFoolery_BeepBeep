@@ -37,5 +37,5 @@ systemctl --user import-environment DB_DIR
 systemctl --user enable backend.service
 systemctl --user start backend.service
 
-systemctl --user enable pull_data.timer
-systemctl --user start pull_data.timer
+# systemctl --user enable pull_data.timer
+# systemctl --user start pull_data.timer
