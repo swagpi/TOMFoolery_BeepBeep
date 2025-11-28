@@ -24,7 +24,8 @@
         /* --- FONT FACE --- */
         @font-face {
             font-family: 'ZTNature-Medium';
-            src: url('ZTNature-Medium.ttf') format('truetype'); /* Ensure this file exists or fallback font will trigger */
+            /* Ensure this file exists in your frontend folder, or it will fallback */
+            src: url('ZTNature-Medium.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
         }
@@ -41,6 +42,7 @@
             min-height: 100vh;
         }
 
+        /* Main Container Card */
         .map-card {
             overflow: hidden;
             position: relative;
@@ -56,6 +58,7 @@
             gap: 6px;
         }
 
+        /* Inner Map Container */
         .map-inner {
             position: relative;
             flex: 1;
@@ -69,9 +72,12 @@
             z-index: 1; 
         }
         
+        /* Hide default OSRM text instructions box */
         .leaflet-routing-container { display: none; }
 
         /* --- UI OVERLAYS --- */
+        
+        /* 1. Brand Badge */
         .brand-badge {
             position: absolute; top: 20px; right: 26px; z-index: 9999;
             background: var(--teal); color: white;
@@ -83,7 +89,7 @@
         }
         .brand-badge-dot { width: 14px; height: 14px; border-radius: 999px; background: var(--sun); }
 
-        /* Search Toolbar */
+        /* 2. Search Toolbar */
         .map-toolbar-container {
             position: absolute; top: 20px; left: 20px; z-index: 9999; width: 320px;
         }
@@ -104,7 +110,7 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* Search Dropdown */
+        /* 3. Search Dropdown */
         #search-results-dropdown {
             margin-top: 5px; width: 100%; background: white;
             border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -117,7 +123,7 @@
         .search-suggestion-item:last-child { border-bottom: none; }
         .search-suggestion-item:hover { background-color: #f0f0f0; }
 
-        /* Zoom & Locate Controls */
+        /* 4. Zoom & Locate Controls */
         .custom-zoom-controls {
             position: absolute; bottom: 30px; right: 20px; z-index: 9999; 
             display: flex; flex-direction: column; gap: 10px; 
@@ -133,6 +139,73 @@
         .zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
         #locate-btn { background-color: var(--teal); color: white; border: none; }
         #locate-btn:hover { background-color: #1e88e5; }
+
+        /* --- SIDEBAR (LEFT PANEL - NEW FEATURE) --- */
+        .sidebar {
+            position: absolute;
+            top: 80px; /* Below toolbar */
+            left: 20px; 
+            bottom: 40px; /* Above bottom edge */
+            width: 320px;
+            background: white;
+            z-index: 2000; /* Above map controls */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateX(-360px); /* Hidden by default */
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            background: var(--teal);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--sun);
+        }
+        .sidebar-title { font-weight: bold; font-size: 18px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .close-btn { 
+            background: none; border: none; color: white; font-size: 28px; cursor: pointer; line-height: 1; padding: 0 5px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto; /* Scrollable */
+            padding: 10px;
+            background: #f9f9f9;
+        }
+
+        /* Trip Cards inside Sidebar */
+        .trip-card {
+            background: white;
+            border-left: 5px solid var(--coral);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        .trip-card:hover { background-color: #fdfdfd; }
+        .trip-info { display: flex; flex-direction: column; gap: 2px; }
+        .trip-route { font-weight: bold; color: var(--dark-teal); font-size: 16px; }
+        .trip-dest { font-size: 12px; color: #666; }
+        .trip-time { 
+            font-weight: bold; font-size: 16px; color: var(--teal); 
+            background: var(--bg-gray); padding: 6px 12px; border-radius: 8px;
+        }
+        .no-data { text-align: center; color: #999; margin-top: 20px; font-size: 15px; }
+
 
         /* --- MARKER STYLES --- */
         .custom-bus-icon {
@@ -175,6 +248,16 @@
                 <div id="search-results-dropdown"></div>
             </div>
 
+            <div id="info-sidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <h2 class="sidebar-title" id="sidebar-stop-name">Stop Info</h2>
+                    <button class="close-btn" onclick="closeSidebar()">×</button>
+                </div>
+                <div class="sidebar-content" id="sidebar-list">
+                    <div class="no-data">Select a stop to see trips</div>
+                </div>
+            </div>
+
             <div id="map"></div>
 
             <div class="custom-zoom-controls">
@@ -184,10 +267,10 @@
             </div>
         </div>
     </div>
-
-    <script>
+<script>
         // --- CONFIGURATION ---
-        const BACKEND_URL = "http://localhost:8000"; // Adjust if your backend is on a different port/IP
+        const USE_MOCK_DATA = true; // ⚠️ BACKEND KAPALIYKEN BUNU TRUE YAP
+        const BACKEND_URL = "http://localhost:8000"; 
         const SNAP_RADIUS_METERS = 50; 
         const ABSOLUTE_MIN_WALK = 200; 
 
@@ -195,7 +278,6 @@
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         
-        // SVG Destination Icon (Perfect Pin)
         var iconDestination = L.divIcon({ 
             className: '', 
             html: `
@@ -214,7 +296,7 @@
         }
 
         // --- 2. MAP SETUP ---
-        var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13); // Default view, will be updated by geo
+        var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ 
             attribution: '&copy; OpenStreetMap contributors', noWrap: true 
         }).addTo(map);
@@ -225,7 +307,6 @@
         var destinationMarker = null;
         var userMarker = null;
         
-        // Layer Group for Stops (to easily clear them)
         var stopsLayerGroup = L.layerGroup().addTo(map);
         var searchStopMarkers = L.layerGroup().addTo(map);
 
@@ -238,14 +319,11 @@
             
             if(userMarker) map.removeLayer(userMarker);
             userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
-            
-            // Initial Fetch
             fetchMapDataFromBackend();
         }
 
         function error() { 
             console.log("Location denied. Defaulting to center."); 
-            // Fallback location (e.g., central Germany or existing mocked center)
             var defaultLoc = L.latLng(51.0, 8.0);
             userLatLng = defaultLoc;
             map.setView(defaultLoc, 14);
@@ -254,45 +332,183 @@
             fetchMapDataFromBackend();
         }
 
-        // --- 4. BACKEND INTERACTION ---
-        
-        // Fetch data whenever the map moves
+        // --- 4. SIDEBAR LOGIC ---
+        function closeSidebar() {
+            document.getElementById('info-sidebar').classList.remove('open');
+        }
+
+        function formatTime(hhmmss) {
+            if(!hhmmss || hhmmss.length < 4) return hhmmss;
+            return hhmmss.substring(0,2) + ":" + hhmmss.substring(2,4);
+        }
+
+        async function openStopSidebar(stopId, stopName) {
+            const sidebar = document.getElementById('info-sidebar');
+            const titleEl = document.getElementById('sidebar-stop-name');
+            const listEl = document.getElementById('sidebar-list');
+
+            // UI Setup
+            titleEl.textContent = stopName;
+            listEl.innerHTML = '<div class="no-data">Loading trips...</div>';
+            sidebar.classList.add('open');
+
+            // --- MOCK DATA LOGIC (BACKEND KAPALIYKEN) ---
+            if (USE_MOCK_DATA) {
+                console.log(`Generating sorted mock trips for: ${stopName}`);
+                
+                setTimeout(() => {
+                    listEl.innerHTML = ''; 
+                    
+                    // 1. Verileri oluştur (Henüz ekrana basma)
+                    let mockTrips = [];
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMin = now.getMinutes();
+
+                    // 5-6 tane rastgele sefer üret
+                    for(let i=0; i<6; i++) {
+                        const randomRoute = Math.floor(Math.random() * 100) + 10;
+                        
+                        // Şu anki zamana rastgele 0-60 dakika ekle
+                        const addedMins = Math.floor(Math.random() * 60);
+                        let tripTimeMin = currentMin + addedMins;
+                        let tripTimeHour = currentHour;
+                        
+                        if (tripTimeMin >= 60) {
+                            tripTimeHour += 1;
+                            tripTimeMin -= 60;
+                        }
+
+                        // Sıralama yapabilmek için sayısal değer (dakika cinsinden)
+                        const totalMinutes = tripTimeHour * 60 + tripTimeMin;
+                        
+                        // Ekranda görünecek format (Örn: 14:05)
+                        const timeString = `${tripTimeHour}:${tripTimeMin < 10 ? '0'+tripTimeMin : tripTimeMin}`;
+
+                        mockTrips.push({
+                            route: randomRoute,
+                            dest: "City Center",
+                            displayTime: timeString,
+                            sortValue: totalMinutes // Sıralama anahtarı
+                        });
+                    }
+
+                    // 2. LİSTEYİ SIRALA (Küçükten Büyüğe -> En erken en üstte)
+                    mockTrips.sort((a, b) => a.sortValue - b.sortValue);
+
+                    // 3. Sıralı listeyi ekrana bas
+                    mockTrips.forEach(trip => {
+                        const item = document.createElement('div');
+                        item.className = 'trip-card';
+                        item.innerHTML = `
+                            <div class="trip-info">
+                                <span class="trip-route">Bus ${trip.route}</span>
+                                <span class="trip-dest">Direction: ${trip.dest}</span>
+                            </div>
+                            <div class="trip-time">${trip.displayTime}</div>
+                        `;
+                        listEl.appendChild(item);
+                    });
+
+                }, 300); 
+                return;
+            }
+            // --- END MOCK DATA ---
+
+            // --- REAL BACKEND DATA ---
+            try {
+                const response = await fetch(`${BACKEND_URL}/station_info?stop_id=${stopId}`);
+                const data = await response.json();
+
+                listEl.innerHTML = ''; 
+
+                if (data.next_trips && data.next_trips.length > 0) {
+                    
+                    // BURAYA DA SIRALAMA EKLENDİ (GARANTİ OLSUN DİYE)
+                    data.next_trips.sort((a, b) => {
+                        const tA = parseInt(a.estimated_arrival || a.arrival_time);
+                        const tB = parseInt(b.estimated_arrival || b.arrival_time);
+                        return tA - tB; // Küçük sayı (erken saat) yukarı
+                    });
+
+                    data.next_trips.forEach(trip => {
+                        const timeStr = trip.estimated_arrival || trip.arrival_time; 
+                        const displayTime = formatTime(timeStr);
+                        
+                        const item = document.createElement('div');
+                        item.className = 'trip-card';
+                        item.innerHTML = `
+                            <div class="trip-info">
+                                <span class="trip-route">Route ${trip.route_id}</span>
+                                <span class="trip-dest">Trip ID: ${trip.trip_id}</span>
+                            </div>
+                            <div class="trip-time">${displayTime}</div>
+                        `;
+                        listEl.appendChild(item);
+                    });
+                } else {
+                    listEl.innerHTML = '<div class="no-data">No upcoming trips found.</div>';
+                }
+
+            } catch (e) {
+                console.error(e);
+                listEl.innerHTML = '<div class="no-data">Error loading data.<br>Check backend connection.</div>';
+            }
+        }
+
+        // --- 5. BACKEND INTERACTION ---
         map.on('moveend', function() { 
             fetchMapDataFromBackend(); 
         });
 
         async function fetchMapDataFromBackend() {
-            const bounds = map.getBounds();
             
-            // Construct the request payload matching backend.py MapRequest model
+            // --- MOCK DATA LOGIC FOR MAP STOPS ---
+            if (USE_MOCK_DATA) {
+                const center = map.getCenter();
+                console.log("⚠️ Backend offline. Generating 2 random stops near center:", center);
+                
+                // Create 2 random stops near the current view center
+                const mockStops = [
+                    {
+                        stop_id: "mock_1",
+                        stop_name: "Random Stop A",
+                        latitude: center.lat + 0.002, // Slightly North
+                        longitude: center.lng + 0.002 // Slightly East
+                    },
+                    {
+                        stop_id: "mock_2",
+                        stop_name: "Random Stop B",
+                        latitude: center.lat - 0.002, // Slightly South
+                        longitude: center.lng - 0.002 // Slightly West
+                    }
+                ];
+                
+                updateMapWithBackendData(mockStops);
+                return; // Stop here, don't fetch
+            }
+            // --- END MOCK DATA ---
+
+            const bounds = map.getBounds();
             const requestBody = {
                 north: bounds.getNorth(),
                 south: bounds.getSouth(),
                 east: bounds.getEast(),
                 west: bounds.getWest(),
-                buffer_meters: 100, // Small buffer to fetch stops just outside view
-                max_stops: 150      // Limit to prevent frontend lag
+                buffer_meters: 100, 
+                max_stops: 150
             };
 
             try {
                 const response = await fetch(`${BACKEND_URL}/map_data`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestBody)
                 });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
                 const data = await response.json();
                 
                 if (data.type === "MapDataResponse" && data.payload && data.payload.stops) {
                     updateMapWithBackendData(data.payload.stops);
-                } else {
-                    console.warn("Received unexpected data format:", data);
                 }
 
             } catch (error) {
@@ -301,29 +517,23 @@
         }
 
         function updateMapWithBackendData(stopsList) {
-            // Clear existing stops to avoid duplicates and remove out-of-view stops
             stopsLayerGroup.clearLayers();
-            allStopsData = []; // Reset internal data array
+            allStopsData = []; 
 
             stopsList.forEach(stopData => {
                 let stopPos = L.latLng(stopData.latitude, stopData.longitude);
-                
-                // Create marker
                 let marker = L.marker(stopPos, {icon: iconBusGray});
                 
-                // Bind popup
                 marker.bindPopup(stopData.stop_name, { offset: [0, -10], autoPan: true });
 
-                // Click event for routing
+                // CLICK EVENT: Route + Sidebar
                 marker.on('click', function(e) { 
                     L.DomEvent.stopPropagation(e); 
                     processJourney(e.latlng, true, stopData.stop_id); 
+                    openStopSidebar(stopData.stop_id, stopData.stop_name);
                 });
                 
-                // Add to layer group
                 stopsLayerGroup.addLayer(marker);
-                
-                // Add to our local data array for searching and routing logic
                 allStopsData.push({ 
                     stop_id: stopData.stop_id, 
                     stop_name: stopData.stop_name, 
@@ -331,14 +541,12 @@
                     marker: marker 
                 });
             });
-            console.log(`Loaded ${stopsList.length} stops from backend.`);
+            console.log(`Updated map with ${stopsList.length} stops.`);
         }
 
         function findNearestStop(targetLatLng) {
             let nearest = null;
             let minDist = Infinity;
-            
-            // We search in the currently loaded stops
             allStopsData.forEach(stop => {
                 let dist = targetLatLng.distanceTo(stop.latLng);
                 if (dist < minDist) { minDist = dist; nearest = stop; }
@@ -346,14 +554,13 @@
             return { stop: nearest, distance: minDist };
         }
 
-        // --- 5. CLEANUP FUNCTIONS ---
+        // --- 6. CLEANUP & ROUTING ---
         function clearRoutes() {
             map.closePopup(); 
             routeControls.forEach(rc => map.removeControl(rc));
             routeControls = [];
             if (destinationMarker) map.removeLayer(destinationMarker);
             
-            // Reset icons to Gray
             allStopsData.forEach(stop => { 
                 stop.marker.setIcon(iconBusGray); 
                 stop.marker.setZIndexOffset(0); 
@@ -365,41 +572,31 @@
             document.getElementById('search-results-dropdown').style.display = 'none';
         }
 
-        // --- 6. ROUTING LOGIC (Smart Core) ---
         map.on('click', function(e) {
             var clickedLoc = e.latlng;
             var finalDestination = clickedLoc;
             var snapped = false;
             var snappedId = null;
-
-            // Snap logic: if clicked near a stop, snap to it
+            
             var result = findNearestStop(clickedLoc);
             if (result.stop && result.distance < SNAP_RADIUS_METERS) {
                 finalDestination = result.stop.latLng;
                 snapped = true;
                 snappedId = result.stop.stop_id;
+                openStopSidebar(snappedId, result.stop.stop_name);
             }
             processJourney(finalDestination, snapped, snappedId);
         });
 
         function processJourney(destLatLng, isBusStop, stopId) {
-            if (!userLatLng) {
-                alert("Waiting for user location...");
-                return;
-            }
+            if (!userLatLng) { alert("Waiting for user location..."); return; }
             
-            if (allStopsData.length === 0) {
-                console.log("No stops loaded nearby.");
-                // Even if no stops, we can allow walking route
-            }
-
             clearRoutes(); 
             clearSearchResults();
 
             var distDirect = userLatLng.distanceTo(destLatLng);
             var startData = findNearestStop(userLatLng);
             
-            // Find end stop object
             var endStop = null;
             if (isBusStop && stopId) {
                 endStop = allStopsData.find(s => s.stop_id === stopId);
@@ -407,10 +604,8 @@
                 let nearestEnd = findNearestStop(destLatLng);
                 if(nearestEnd.stop) endStop = nearestEnd.stop;
             }
-                
             var startStop = startData.stop;
             
-            // Destination Marker logic
             if (isBusStop && endStop) {
                 endStop.marker.openPopup();
             } else {
@@ -418,22 +613,17 @@
                 destinationMarker.bindPopup("Destination", { offset: [0, -45] }).openPopup();
             }
 
-            // === SMART ALGORITHM ===
             var useBus = false;
-            
-            // Only consider bus if we have valid start and end stops
             if (startStop && endStop && startStop.stop_id !== endStop.stop_id) {
                 var distToStart = userLatLng.distanceTo(startStop.latLng);
                 var distFromEnd = endStop.latLng.distanceTo(destLatLng);
                 var totalBusOverheadWalk = distToStart + distFromEnd;
                 
-                // Simple heuristic: If direct walk is very short OR walking to/from stops is longer than direct
                 if (distDirect > ABSOLUTE_MIN_WALK && distDirect > totalBusOverheadWalk) {
                     useBus = true;
                 }
             }
 
-            // Styles
             var walkStyles = [ 
                 { color: '#6E8F72', opacity: 1, weight: 7 }, 
                 { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10' } 
@@ -444,28 +634,23 @@
             ];
 
             if (!useBus) {
-                console.log("Decision: Walk Only");
+                console.log("Decision: Walk");
                 createRoute(userLatLng, destLatLng, walkStyles, 'walking');
             } else {
-                console.log("Decision: Take Bus");
-                // Highlight active stops
+                console.log("Decision: Bus");
                 startStop.marker.setIcon(iconBusRed);
                 startStop.marker.setZIndexOffset(1000);
                 endStop.marker.setIcon(iconBusRed);
                 endStop.marker.setZIndexOffset(1000);
 
-                // 1. Walk to Start Stop
                 createRoute(userLatLng, startStop.latLng, walkStyles, 'walking');
-                // 2. Bus Ride (Visualized straight or via OSRM driving)
                 createRoute(startStop.latLng, endStop.latLng, busStyles, 'driving'); 
                 
-                // 3. Walk from End Stop to Destination (if not exactly at stop)
                 if (!isBusStop) {
                     createRoute(endStop.latLng, destLatLng, walkStyles, 'walking');
                 }
             }
             
-            // Fit bounds
             var bounds = L.latLngBounds([userLatLng, destLatLng]);
             map.fitBounds(bounds, {padding: [80, 80]}); 
         }
@@ -481,7 +666,7 @@
             routeControls.push(control);
         }
 
-        // --- 7. SEARCH FEATURE (Using Backend Data) ---
+        // --- 7. SEARCH FEATURE ---
         const searchInput = document.getElementById('search-input');
         const searchDropdown = document.getElementById('search-results-dropdown');
 
@@ -490,11 +675,7 @@
             searchDropdown.innerHTML = '';
             
             if (query.length > 2) {
-                // Filter currently visible stops
-                // Note: A full search would require a separate backend endpoint (GET /search_stations?query=...)
-                // For now, we filter what's loaded on the map.
                 const matches = allStopsData.filter(s => s.stop_name.toLowerCase().includes(query));
-                
                 if (matches.length > 0) {
                     searchDropdown.style.display = 'block';
                     matches.forEach(item => {
@@ -507,7 +688,6 @@
                         searchDropdown.appendChild(div);
                     });
                 } else {
-                    // Optional: Call backend search API here if desired
                     searchDropdown.style.display = 'none';
                 }
             } else {
@@ -522,9 +702,10 @@
             map.setView(item.latLng, 16);
             item.marker.openPopup();
             processJourney(item.latLng, true, item.stop_id);
+            openStopSidebar(item.stop_id, item.stop_name);
         }
 
-        // --- 8. LOCATE ME BTN ---
+        // --- 8. LOCATE ME ---
         document.getElementById('locate-btn').addEventListener('click', function() {
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
         });
