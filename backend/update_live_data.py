@@ -1,0 +1,4 @@
+from download_rt_gtfs_data import download_rt_gtfs_data
+from map_data import update_live_data
+
+update_live_data(DB_DIR)
