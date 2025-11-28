@@ -14,6 +14,7 @@
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
+            --purple: #9B59B6; /* Live Bus Color */
             --bg-gray: #f3f4f6;
         }
 
@@ -42,9 +43,7 @@
         .map-inner { position: relative; flex: 1; border-radius: 10px; overflow: hidden; }
         #map { width: 100%; height: 100%; z-index: 1; }
         
-        /* Visual feedback when disabled */
         .map-disabled { cursor: not-allowed !important; }
-
         .leaflet-routing-container { display: none; }
 
         /* --- NEW LOGO STYLE --- */
@@ -85,7 +84,6 @@
         }
         .zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
         
-        /* Active/Inactive styles for the toggle button */
         #toggle-label-btn.disabled-mode { background-color: #ffdddd; color: #c0392b; border-color: #e74c3c; }
 
         /* Sidebar */
@@ -117,27 +115,26 @@
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
         
-        /* Yellow style for visualized route stops */
         .bus-route-stop-yellow { 
-            background-color: var(--sun); /* YELLOW */
+            background-color: var(--sun); 
             border: 2px solid #fff; 
             z-index: 1000 !important; 
         }
 
-        /* Label style for route stops */
+        /* LIVE BUS ICON STYLE */
+        .bus-live {
+            background-color: var(--purple);
+            border: 2px solid white;
+            box-shadow: 0 0 8px var(--purple);
+            z-index: 2000 !important;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 12px;
+        }
+
         .stop-name-label {
-            background-color: transparent;
-            border: none;
-            box-shadow: none;
-            font-size: 11px;
-            font-weight: bold;
-            color: #333;
-            /* White halo for readability */
-            text-shadow: 
-                -1px -1px 0 #fff,  
-                 1px -1px 0 #fff,
-                -1px  1px 0 #fff,
-                 1px  1px 0 #fff;
+            background-color: transparent; border: none; box-shadow: none;
+            font-size: 11px; font-weight: bold; color: #333;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
         }
 
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
@@ -148,6 +145,7 @@
         /* --- HIDE LOGIC --- */
         .hide-routes .destination-pin { display: none !important; }
         .hide-routes .leaflet-routePane-pane { display: none !important; }
+        .hide-routes .bus-live { display: none !important; }
 
     </style>
 </head>
@@ -193,13 +191,20 @@
 
         // --- STATE ---
         let isPathfindingActive = true; 
-        let activeTripPolyline = null; // Store the trip line to remove it later
+        let activeTripPolyline = null; 
 
+        // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
-        
-        // Yellow icon for route stops
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
+        
+        // LIVE BUS ICON
+        var iconLiveBus = L.divIcon({ 
+            className: 'custom-bus-icon bus-live', 
+            html: '🚌', // Simple bus emoji or SVG
+            iconSize: [26, 26], 
+            iconAnchor: [13, 13] 
+        });
 
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
@@ -223,6 +228,7 @@
         var destinationMarker = null;
         var userMarker = null;
         var stopsLayerGroup = L.layerGroup().addTo(map);
+        var liveBusLayerGroup = L.layerGroup().addTo(map); // Layer for bus icons
 
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
 
@@ -260,7 +266,6 @@
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
                         const item = document.createElement('div'); item.className = 'trip-card';
-                        // Click event to visualize trip route
                         item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
                         item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
                         listEl.appendChild(item);
@@ -269,16 +274,14 @@
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
-        // --- NEW FUNCTION: VISUALIZE TRIP ---
+        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
 
             try {
-                // 1. Fetch route details
                 const response = await fetch(`${BACKEND_URL}/routes_for_stop?stop_id=${stopId}`);
-                const tripsData = await response.json();
+                const tripsData = await response.json(); // Returns list of trips
                 
-                // 2. Find the specific trip
                 const targetTrip = tripsData.find(t => t.trip_id == tripId);
                 
                 if (!targetTrip || !targetTrip.full_route_stops) {
@@ -286,12 +289,13 @@
                     return;
                 }
 
-                // 3. CLEAR EVERYTHING
+                // 1. Clean up map
                 clearRoutes(); 
                 stopsLayerGroup.clearLayers(); 
+                liveBusLayerGroup.clearLayers(); // Clear previous bus icons
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
 
-                // 4. Draw the Path (Polyline)
+                // 2. Draw Path
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
                 
                 activeTripPolyline = L.polyline(pathCoordinates, {
@@ -303,21 +307,31 @@
 
                 map.fitBounds(activeTripPolyline.getBounds(), {padding: [50, 50]});
 
-                // 5. Add markers ONLY for stops in this trip
+                // 3. Draw Stops
                 targetTrip.full_route_stops.forEach(stop => {
-                    // Use yellow icon
                     let marker = L.marker([stop.lat, stop.lon], {icon: iconBusYellow});
-                    
-                    // Permanent name label
-                    marker.bindTooltip(stop.name, {
-                        permanent: true, 
-                        direction: 'top', 
-                        className: 'stop-name-label',
-                        offset: [0, -10]
-                    });
-
+                    marker.bindTooltip(stop.name, { permanent: true, direction: 'top', className: 'stop-name-label', offset: [0, -10] });
                     marker.bindPopup(`<b>${stop.name}</b><br>Seq: ${stop.sequence}`);
                     stopsLayerGroup.addLayer(marker);
+                });
+
+                // 4. DRAW LIVE BUSES using 'last_known_stop'
+                // We iterate ALL trips returned for this stop to find others on the same route if needed,
+                // OR just use the current trip. Let's visualize any vehicle on this route segment.
+                
+                tripsData.forEach(t => {
+                    // Only consider trips that have a 'last_known_stop'
+                    if (t.last_known_stop && t.route_id === targetTrip.route_id) {
+                        // Find coordinates of this stop in the full list
+                        const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
+                        
+                        if (stopInfo) {
+                            console.log("Found live bus at:", stopInfo.name);
+                            let busMarker = L.marker([stopInfo.lat, stopInfo.lon], {icon: iconLiveBus});
+                            busMarker.bindPopup(`<b>Bus ${t.route_id}</b><br>Trip: ${t.trip_id}<br>Last Stop: ${stopInfo.name}`);
+                            liveBusLayerGroup.addLayer(busMarker);
+                        }
+                    }
                 });
 
             } catch(e) {
@@ -326,7 +340,6 @@
         }
 
         map.on('moveend', function() { 
-            // Only fetch regular map data if we are NOT viewing a specific trip path
             if (!activeTripPolyline) {
                 fetchMapDataFromBackend(); 
             }
@@ -360,9 +373,9 @@
                     openStopSidebar(stopData.stop_id, stopData.stop_name);
                     
                     if (isPathfindingActive) {
-                        // If clicking another stop while in trip view, reset view
                         if (activeTripPolyline) {
                              if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                             liveBusLayerGroup.clearLayers(); // Clear buses on reset
                              fetchMapDataFromBackend(); 
                         }
                         processJourney(e.latlng, true, stopData.stop_id); 
@@ -388,6 +401,7 @@
             if (destinationMarker) map.removeLayer(destinationMarker);
             
             if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+            liveBusLayerGroup.clearLayers(); // Clear bus icons
             
             allStopsData.forEach(stop => { stop.marker.setIcon(iconBusGray); stop.marker.setZIndexOffset(0); });
         }
@@ -396,15 +410,16 @@
         map.on('click', function(e) {
             document.getElementById('search-results-dropdown').style.display = 'none';
             
-            // Reset trip view on map click
             if (activeTripPolyline) {
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                liveBusLayerGroup.clearLayers();
                 fetchMapDataFromBackend();
                 closeSidebar();
                 return;
             }
 
-            // Allow click even if pathfinding disabled (but no route drawing)
+            if (!isPathfindingActive) return; 
+
             var result = findNearestStop(e.latlng);
             var isSnapped = (result.stop && result.distance < SNAP_RADIUS_METERS);
 
@@ -480,6 +495,7 @@
             if (!isPathfindingActive) {
                 clearRoutes(); 
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; fetchMapDataFromBackend(); }
+                liveBusLayerGroup.clearLayers(); // Clear buses if off
                 toggleBtn.innerHTML = "🚫"; toggleBtn.classList.add('disabled-mode');
                 mapWrapper.classList.add('hide-routes'); closeSidebar();
             } else {
