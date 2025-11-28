@@ -4,9 +4,10 @@ set -e
 
 CURRENT_DIR=$PWD
 SERVICE_DIR=$PWD/services
+USER_SERVICE_DIR=$HOME/.config/systemd/user
 SERVICES=$(find $SERVICE_DIR -name "*.service")
 
-SYSTEMD_CONF="/etc/systemd/system.conf"
+SYSTEMD_CONF="$HOME/.config/systemd/user/system.conf"
 BACKUP_CONF="/etc/systemd/system.conf.bak"
 
 # echo "Backing up systemd config to $BACKUP_CONF..."
@@ -19,18 +20,13 @@ BACKUP_CONF="/etc/systemd/system.conf.bak"
 # fi
 
 SYSTEMD_CONF_FILE="
-[Manager]\n
-UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR\n
+[Manager]
+UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR
 "
 
-if ! [[ -d /etc/systemd/system.conf.d ]]; then
-    echo "Creating system.conf.d folder"
-    sudo mkdir /etc/systemd/system.conf.d
-fi
-
-if ! [[ -f /etc/systemd/system.conf.d/tomfoolery.conf ]]; then 
-    echo "creating file in /etc/systemd/system.conf.d/tomfoolery.conf"
-    echo "$SYSTEMD_CONF_FILE" > /etc/systemd/system.conf.d/tomfoolery.conf
+if ! [[ -d $USER_SERVICE_DIR ]]; then
+    echo "creating user service dir"
+    sudo mkdir $USER_SERVICE_DIR
 fi
 
 echo "Reloading systemd daemon..."
@@ -38,5 +34,10 @@ sudo systemctl daemon-reexec
 sudo systemctl daemon-reload
 
 for SERVICE in $SERVICES do
-    sudo systemctl enable $SERVICE
+    if ! [[ -f $USER_SERVICE_DIR/$(basename $SERVICE) ]]; then
+        cp $SERVICE $USER_SERVICE_DIR/$(basename $SERVICE)
+    fi
+
+    systemctl --user enable $(basename $SERVICE)
+    systemctl --user start $(basename $SERVICE)
 done
