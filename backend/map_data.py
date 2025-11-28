@@ -1,5 +1,4 @@
 import sqlite3
-import random
 import time
 
 def initialize_db(db_path: str):
@@ -104,11 +103,11 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     north, south, east, west = bounds["north"], bounds["south"], bounds["east"], bounds["west"]
     buffer_meters = bounds.get("buffer_meters", 0)
 
-    if north-south > 0.2:
+    if north-south > 0.1:
         return {"type": "MapDataResponse", "payload": {"stops": [], "routes": []}}
 
 
-    print(f"North {north}, South {south}, West {west}, east {east}")
+    #print(f"North {north}, South {south}, West {west}, east {east}")
 
     # Convert buffer meters to degrees
     deg_buf = buffer_meters / 111_320

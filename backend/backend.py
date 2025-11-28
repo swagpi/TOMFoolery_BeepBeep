@@ -56,15 +56,12 @@ def read_root():
 # Harita Verisi (Duraklar)
 @app.post("/map_data")
 def get_map_data(request: MapRequest):
-    print("request: ", request)
-    print(f"📥 Map Data Request: N={request.north}, S={request.south}")
     try:
         response = handle_map_update_request(
             DB_PATH,
             bounds=request.dict(),
             max_stops=request.max_stops
         )
-        print("Response: ", response)
         return response
     except Exception as e:
         print(f"❌ Error in /map_data: {e}")
