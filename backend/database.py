@@ -4,7 +4,7 @@ import csv
 
 #declare paths
 DATABASE_PATH = "data/database.db"
-DE_FULL_PATH = "de_full/"
+DE_FULL_PATH = "latest/"
 
 #Create Database
 directory = os.path.dirname(DATABASE_PATH)
