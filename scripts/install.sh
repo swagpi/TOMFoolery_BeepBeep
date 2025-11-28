@@ -19,11 +19,16 @@ sudo cp "$SYSTEMD_CONF" "$BACKUP_CONF"
 # fi
 
 if ! [[ -d /etc/systemd/system.conf.d ]]; then
+    echo "Creating system.conf.d folder"
     sudo mkdir /etc/systemd/system.conf.d
 fi
 
 if ! [[ -f /etc/systemd/system.conf.d/tomfoolery.conf ]]; then 
-    echo "[Manager]\nUnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR" > /etc/systemd/system.conf.d/tomfoolery.conf
+    echo "creating file in /etc/systemd/system.conf.d/tomfoolery.conf"
+    cat << EOF
+    [Manager]
+    UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR
+    EOF > /etc/systemd/system.conf.d/tomfoolery.conf
 fi
 
 echo "Reloading systemd daemon..."
