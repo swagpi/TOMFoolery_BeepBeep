@@ -9,8 +9,8 @@ SERVICES=$(find $SERVICE_DIR -name "*.service")
 SYSTEMD_CONF="/etc/systemd/system.conf"
 BACKUP_CONF="/etc/systemd/system.conf.bak"
 
-echo "Backing up systemd config to $BACKUP_CONF..."
-sudo cp "$SYSTEMD_CONF" "$BACKUP_CONF"
+# echo "Backing up systemd config to $BACKUP_CONF..."
+# sudo cp "$SYSTEMD_CONF" "$BACKUP_CONF"
 
 # Append custom UnitPath if not already present
 # if ! grep -q "$SERVICE_DIR" "$SYSTEMD_CONF"; then
