@@ -18,6 +18,11 @@ BACKUP_CONF="/etc/systemd/system.conf.bak"
 #     sudo sed -i "/^\[Manager\]/a UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR" "$SYSTEMD_CONF"
 # fi
 
+SYSTEMD_CONF_FILE="
+[Manager]\n
+UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR\n
+"
+
 if ! [[ -d /etc/systemd/system.conf.d ]]; then
     echo "Creating system.conf.d folder"
     sudo mkdir /etc/systemd/system.conf.d
@@ -25,10 +30,7 @@ fi
 
 if ! [[ -f /etc/systemd/system.conf.d/tomfoolery.conf ]]; then 
     echo "creating file in /etc/systemd/system.conf.d/tomfoolery.conf"
-    cat << EOF
-    [Manager]
-    UnitPath=/etc/systemd/system:/lib/systemd/system:$SERVICE_DIR
-    EOF > /etc/systemd/system.conf.d/tomfoolery.conf
+    echo "$SYSTEMD_CONF_FILE" > /etc/systemd/system.conf.d/tomfoolery.conf
 fi
 
 echo "Reloading systemd daemon..."
