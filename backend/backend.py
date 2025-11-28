@@ -2,7 +2,9 @@ from fastapi import FastAPI, Query, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
-from create_response import handle_map_update_request, initialize_db
+from map_data import handle_map_update_request, initialize_db
+from search import search_stations as search_stations_func
+from station_info import get_station_info
 
 app = FastAPI(title="GTFS Map API")
 
@@ -23,8 +25,10 @@ class MapRequest(BaseModel):
 
 
 # -------------------------------
-# API endpoint
+# API endpoints
 # -------------------------------
+
+#map data updates
 @app.post("/map_data")
 def get_map_data(request: MapRequest):
     try:
@@ -37,7 +41,15 @@ def get_map_data(request: MapRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#search queries
+@app.get("/search_stations")
+def search_stations_api(query: str, limit: int = 20):
+    return search_stations_func(query, limit)
 
+#station information queries
+@app.get("/station_info")
+def station_info_endpoint(stop_id: str):
+    return get_station_info(stop_id)
 # -------------------------------
 # Optional health check
 # -------------------------------
