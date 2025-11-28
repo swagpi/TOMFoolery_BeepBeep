@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -9,8 +10,10 @@ from station_info import get_station_info
 
 app = FastAPI(title="GTFS Map API")
 
+# Initialize database (adjust path to your DB)
+DATA_ROOT: str = os.getenv("DB_DIR", "data")
+DB_PATH = DATA_ROOT + "/database.db"
 
-DB_PATH = "tomfoolery-rs-main/database.db"
 initialize_db(DB_PATH)
 
 app.add_middleware(

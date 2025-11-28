@@ -5,10 +5,10 @@ use serde::Deserialize;
 use std::{error::Error, fs};
 
 // Input files
-const CALENDAR: &str = "latest/calendar.txt";
-const TRIPS: &str = "latest/trips.txt";
-const STOP_TIMES: &str = "latest/stop_times.txt";
-const STOPS: &str = "latest/stops.txt";
+const CALENDAR: &str = "data/calendar.txt";
+const TRIPS: &str = "data/trips.txt";
+const STOP_TIMES: &str = "data/stop_times.txt";
+const STOPS: &str = "data/stops.txt";
 
 // -------------------------
 // Data structures
@@ -179,7 +179,11 @@ fn load_stops(tx: &Transaction) -> Result<(), Box<dyn Error>> {
 // Main
 // -------------------------
 fn main() {
-    let mut db = Connection::open("database.db").unwrap();
+    const DB_FILE: &str = "database.db";
+    let mut base_path = std::env::var("DB_DIR").unwrap().to_string();
+    base_path.push_str(DB_FILE);
+
+    let mut db = Connection::open(&base_path).unwrap();
 
     create_tables(&db);
 

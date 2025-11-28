@@ -1,5 +1,6 @@
 #!/bin/bash
 
+PORT=6666
 # cd $HOME/TOMFoolery_BeepBeep/backend
 cd $HOME/gits/TOMFoolery_BeepBeep/backend // TODO: Remove this line!
 echo $PWD
@@ -9,7 +10,4 @@ source .venv/bin/activate
 
 pip3 install -r requirements.txt
 
-while [[ true ]]; do
-    python3 backend.py
-    sleep 5
-done
+uvicorn backend:app --port "$PORT" --host "0.0.0.0"
