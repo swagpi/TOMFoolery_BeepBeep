@@ -1,0 +1,12 @@
+[Unit]
+Description=The BeepBeep backend
+After=network.target
+After=
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=5
+User=tomfoolery
+ExecStart=/usr/bin
