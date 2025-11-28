@@ -35,7 +35,7 @@ done
 sudo loginctl enable-linger $USER
 
 sudo systemctl daemon-reload
-sudo systemctl daemon-restart
+sudo systemctl daemon-reexec
 
 systemctl --user import-environment DB_DIR
 
