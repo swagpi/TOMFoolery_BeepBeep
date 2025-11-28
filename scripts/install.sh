@@ -32,6 +32,11 @@ for SERVICE in $SERVICES; do
     fi
 done
 
+sudo loginctl enable-linger $USER
+
+sudo systemctl daemon-reload
+sudo systemctl daemon-restart
+
 systemctl --user import-environment DB_DIR
 
 systemctl --user enable backend.service
