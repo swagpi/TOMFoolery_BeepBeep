@@ -8,6 +8,6 @@ set -e
 cd "$DB_DIR"
 
 curl "https://download.gtfs.de/germany/free/latest.zip" -o "$TMP_DATA"
-unzip "$TMP_DATA" -d 
+unzip "$TMP_DATA" -d "$OUT_DIR"
 
 ./tomfoolery

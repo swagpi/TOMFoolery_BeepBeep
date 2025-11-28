@@ -7,4 +7,4 @@ OnCalendar = Weekly
 Persistent = True
 
 [Install]
-WantedBy=backend.service
+WantedBy=timers.target backend.service
