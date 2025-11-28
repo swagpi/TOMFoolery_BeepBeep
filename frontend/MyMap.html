@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-      <meta charset="utf-8" />
-    <title>Map with Custom Zoom Buttons</title>
+    <meta charset="utf-8" />
+    <title>Transit Map Application</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
@@ -10,16 +10,16 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* 🎨 Tropical Jade Sunrise palette */
+        /* 🎨 Tropical Jade Sunrise palette (New) */
         :root {
-            --coral:   #FCA47C;
-            --sun:     #F9D779;
-            --aqua:    #23CED9;
-            --jade:    #A1CCA6;
-            --teal:    #097C87;
+            --coral: #FCA47C;
+            --sun: #F9D779;
+            --aqua: #23CED9;
+            --jade: #A1CCA6;
+            --teal: #097C87;
         }
 
-        /* Center the framed card */
+        /* 🖼 Frame Setup (New) */
         body {
             margin: 0;
             padding: 0;
@@ -31,121 +31,91 @@
             min-height: 100vh;
         }
 
-        /* 🖼 Frame around the map */
         .map-card {
             overflow: hidden;
             position: relative;
-            width: min(1400px, 98vw);   /* narrower width */
-            height: min(820px, 95vh);   /* taller frame for bigger map */
+            width: min(1400px, 98vw);
+            height: min(820px, 95vh);
             background: #ffffff;
-            border-radius: 12px;        /* thinner corners */
+            border-radius: 12px;
             box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-            padding: 8px;              /* smaller padding -> bigger map */
-            
+            padding: 8px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            gap: 6px; 
+            gap: 6px;
         }
 
-        /* Beep Beep logo badge */
+        /* 🔔 Logo Badge (New) */
         .brand-badge {
-             position: absolute;
-    top: 20px;        /* was -22px */
-    right: 26px;
-    background: var(--teal);
-    color: #ffffff;
-    padding: 10px 22px;
-    border-radius: 999px;
-    border: 4px solid #ffffff;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
-    font-size: 17px;
-    font-weight: 800;
-    text-transform: uppercase;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    letter-spacing: 0.1em;
-    z-index: 10000;
-}
-
-.brand-badge-dot {
-    width: 14px;                     /* bigger dot */
-    height: 14px;
-    border-radius: 999px;
-    background: var(--sun);
-}
-
-        /* Optional small header text inside the card */
-        .map-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: #111827;
-        }
-
-        .map-card-pill {
-            padding: 4px 10px;
+            position: absolute;
+            top: 20px;
+            right: 26px;
+            background: var(--teal);
+            color: #ffffff;
+            padding: 10px 22px;
             border-radius: 999px;
-            background: var(--jade);
-            color: #074c51;
-            font-size: 11px;
-            font-weight: 600;
+            border: 4px solid #ffffff;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+            font-size: 17px;
+            font-weight: 800;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.1em;
+            z-index: 10000;
         }
 
-        /* Container that holds the Leaflet map */
-        .map-inner {
-                position: relative;
-                flex: 1;
-                border-radius: 14px;   /* slightly smaller */
-                overflow: hidden;
-}
+        .brand-badge-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 999px;
+            background: var(--sun);
+        }
 
-        /* Actual Leaflet map div */
+        /* 🗺 Map Container (Modified to fit the card structure) */
+        .map-inner {
+            position: relative;
+            flex: 1;
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        /* Actual Leaflet map div (Modified: absolute positioning removed, relying on map-inner flex/sizing) */
         #map {
             width: 100%;
             height: 100%;
         }
-
+        
         /* Hide routing text instructions */
         .leaflet-routing-container { display: none; }
 
         /* --- MARKER STYLES --- */
         .custom-bus-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
-            font-size: 12px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; border: 2px solid white;  
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;         
         }
         .bus-active {
-            background-color: #ff0000;
-            width: 24px !important;
-            height: 24px !important;
-            margin-left: -12px !important;
-            margin-top: -12px !important;
+            background-color: #ff0000; width: 24px !important; height: 24px !important;
+            margin-left: -12px !important; margin-top: -12px !important;
         }
         .bus-passive {
-            background-color: #808080;
-            opacity: 0.9;
-            width: 20px !important;
-            height: 20px !important;
-            margin-left: -10px !important;
-            margin-top: -10px !important;
-            font-size: 10px;
+            background-color: #808080; opacity: 0.9;
+            width: 20px !important; height: 20px !important;
+            margin-left: -10px !important; margin-top: -10px !important;
+            font-size: 10px;          
         }
 
-        /* --- CUSTOM ZOOM BUTTON STYLES --- */
+        /* --- CUSTOM ZOOM/LOCATE BUTTON STYLES (Consolidated & Circular) --- */
         .custom-zoom-controls {
             position: absolute;
             bottom: 30px;
             right: 20px;
             z-index: 9999;
             display: flex;
-            flex-direction: column;
+            flex-direction: column; 
             gap: 10px;
         }
 
@@ -154,7 +124,7 @@
             height: 45px;
             background-color: white;
             border: 2px solid #ccc;
-            border-radius: 8px;
+            border-radius: 50%; /* Make all zoom/locate buttons circular */
             font-size: 24px;
             font-weight: bold;
             color: #333;
@@ -170,148 +140,136 @@
             background-color: #f0f0f0;
             transform: scale(0.95);
         }
-            /* --- NEW: TOOLBAR STYLES --- */
-            /* Custom Font Loading */
-            @font-face {
-                font-family: 'ZTNature-Medium';
-                /* IMPORTANT: You must replace 'path/to/' with the actual location of your font file */
-                src: url('path/to/ZTNature-Medium.woff2') format('woff2'),
-                     url('path/to/ZTNature-Medium.woff') format('woff');
-                font-weight: normal;
-                font-style: normal;
+        
+        /* Locate Button Overrides */
+        #locate-btn {
+            background-color: var(--teal); /* Using CSS Variable for color */
+            color: white;
+            border: none;
+            /* Note: height, width, border-radius come from .zoom-btn */
+        }
+        #locate-btn:hover {
+            background-color: #1e88e5;
         }
 
-            /* --- NEW: TOOLBAR STYLES --- */
-            .map-toolbar {
-                position: absolute;
-                top: 20px;
-                left: 20px;
+        /* --- SEARCH TOOLBAR STYLES --- */
+        
+        /* Font Loading (Kept for completeness) */
+        @font-face {
+            font-family: 'ZTNature-Medium';
+            src: url('path/to/ZTNature-Medium.woff2') format('woff2'),
+                 url('path/to/ZTNature-Medium.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
 
-                z-index: 9999;
-                display: flex;
-                gap: 5px;
-                padding: 6px;
-                background-color: #a1cca6;
-                border-radius: 8px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            }
-            /* --- NEW: CONTAINER for Toolbar + Dropdown --- */
-            .map-toolbar-container {
-                position: absolute; /* Positions the whole search area */
-                top: 20px;
-                left: 20px;
-                z-index: 9999;
-            /* This container will determine the width of the dropdown */
-                width: 300px; 
-            }
+        /* NEW: Container for Toolbar + Dropdown (Moved inside .map-inner) */
+        .map-toolbar-container {
+            position: absolute; 
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            width: 300px; 
+        }
 
-            #search-input {
-                width: 250px;
-                padding: 8px 12px;
-                border: 1px solid #ccc;
-                border-radius: 6px;
-                font-size: 16px;
-                /* Apply custom font to the search bar and placeholder */
-               font-family: 'ZTNature-Medium', sans-serif; 
-            }
+        .map-toolbar {
+            display: flex;
+            gap: 5px;
+            padding: 6px;
+            background-color: var(--jade); /* Using CSS Variable for background */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
 
-            /* --- NEW: SEARCH DROPDOWN STYLES --- */
-            #search-results-dropdown {
-                position: relative;
-                top: 5px; /* Little space between bar and dropdown */
-                width: 100%;
-                z-index: 10000;
-                max-height: 300px;
-                overflow-y: auto;
-                background-color: white;
-                border-radius: 8px;
-                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-                list-style: none; /* Hide bullets if we use a ul/li list */
-            }
+        #search-input {
+            width: 250px;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: 'ZTNature-Medium', sans-serif; 
+        }
 
-            .search-suggestion-item {
-                padding: 10px 15px;
-                cursor: pointer;
-                border-bottom: 1px solid #eee;
-                font-family: 'ZTNature-Medium', sans-serif;
-                font-size: 14px;
-                color: #333;
-            }
+        #search-input::placeholder {
+            font-family: 'ZTNature-Medium', sans-serif;
+            color: #888;
+        }
 
-            .search-suggestion-item:last-child {
-                border-bottom: none;
-            }
-
-            .search-suggestion-item:hover {
-                background-color: #f0f0f0;
-            }
-
-
-
-            #search-input::placeholder {
-                font-family: 'ZTNature-Medium', sans-serif;
-                color: #888; /* Make the placeholder a bit lighter */
-            }
-
-            /* --- NEW: SEARCH BUTTON STYLE (S or 🔍) --- */
-            #search-btn {
-                width: 40px;
-                height: 40px;
-                background-color: #f0f0f0; 
-                color: #333;
-                border: 1px solid #ccc;
-                border-radius: 6px; /* <-- CHANGED: Increased the radius for rounder corners */
-                cursor: pointer;
-                font-size: 20px; /* Using 20px for the 'S' or '🔍' */
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: Arial, sans-serif; 
-            }
-            /* ... rest of the #search-btn styles ... */
-
-            #locate-btn {
-                width: 45px;
-                height: 45px;
-                background-color: #097c87;
-                color: white;
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                font-size: 18px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            }
-            #locate-btn:hover {
-                background-color: #1e88e5;
-}
+        #search-btn {
+            width: 40px;
+            height: 40px;
+            background-color: #f0f0f0; 
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 15px; /* Rounder edges for search button */
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif; 
+        }
+        
+        /* --- SEARCH DROPDOWN STYLES --- */
+        #search-results-dropdown {
+            position: relative;
+            top: 5px;
+            width: 100%;
+            z-index: 10000;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            list-style: none;
+        }
+        
+        .search-suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-family: 'ZTNature-Medium', sans-serif;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .search-suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .search-suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
 
     </style>
 </head>
 <body>
 
-    <!-- 🖼 FRAME -->
     <div class="map-card">
-        <!-- 🔔 Beep Beep logo -->
         <div class="brand-badge">
             <span class="brand-badge-dot"></span>
             <span>beep beep</span>
         </div>
 
-
-        <!-- Map container inside the frame -->
         <div class="map-inner">
             <div id="map"></div>
+            
+            <div class="map-toolbar-container">
+                <div class="map-toolbar">
+                    <input type="text" id="search-input" placeholder="Search for a stop or address..." />
+                    <button id="search-btn" title="Search">🔍</button>
+                </div>
+                <div id="search-results-dropdown">
+                </div>
+            </div>
 
             <div class="custom-zoom-controls">
+                <button id="locate-btn" title="Locate Me" class="zoom-btn">📍</button>
                 <button class="zoom-btn" onclick="map.zoomIn()">+</button>
                 <button class="zoom-btn" onclick="map.zoomOut()">-</button>
             </div>
         </div>
     </div>
-
     <script>
         // --- 1. ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '🚌', iconSize: [24, 24] });
@@ -319,41 +277,41 @@
 
         function createUserMarker(latlng) {
             return L.circleMarker(latlng, {
-                radius: 8,
-                fillColor: "#2196F3",
-                color: "#FFF",
-                weight: 2,
-                fillOpacity: 1
+                radius: 8, fillColor: "#2196F3", color: "#FFF", weight: 2, fillOpacity: 1
             });
         }
 
         // --- 2. MAP SETUP ---
         var map = L.map('map', {
-            dragging: true,
-            tap: true,
+            dragging: true, 
+            tap: true, 
             zoomControl: false // Disable default Leaflet zoom control
         }).setView([0,0], 1);
 
-        // 🔗 HOT OpenStreetMap tiles
+        // Map Tiles: Merged attribution and URL
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
+            attribution: '&copy; MapTiler &copy; OpenStreetMap contributors',
             noWrap: true
         }).addTo(map);
 
         var userLatLng = null;
-        var allStopsData = [];
-        var routeControls = [];
+        var allStopsData = []; 
+        var routeControls = []; 
         var destinationMarker = null;
         var userMarker = null;
+        
+        // --- Global Layer Groups for Search Results ---
+        var searchStopMarkers = L.layerGroup().addTo(map);
+        var searchRouteLines = L.layerGroup().addTo(map);
 
         // --- 3. GET LOCATION ---
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
 
         function success(position) {
-            userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+            userLatLng = L.latLng(position.coords.latitude, position.coords.longitude); 
             map.setView(userLatLng, 15);
             userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
-
+            
             generateStaticMockStops(userLatLng);
             logBoundsForBackend();
         }
@@ -374,7 +332,7 @@
 
         // --- 5. STATIC MOCK DATA ---
         function generateStaticMockStops(center) {
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 30; i++) { 
                 let latOffset = (Math.random() - 0.5) * 0.04;
                 let lngOffset = (Math.random() - 0.5) * 0.04;
                 let stopPos = L.latLng(center.lat + latOffset, center.lng + lngOffset);
@@ -399,56 +357,124 @@
             if (destinationMarker) map.removeLayer(destinationMarker);
             allStopsData.forEach(stop => {
                 stop.marker.setIcon(iconBusGray);
-                stop.marker.setZIndexOffset(0);
+                stop.marker.setZIndexOffset(0); 
             });
         }
+        
+        function clearSearchResults() {
+            searchStopMarkers.clearLayers();
+            searchRouteLines.clearLayers();
+            clearRoutes(); 
+        }
+
+        function drawStopsAndRoutes(data) {
+            clearSearchResults(); 
+
+            if (data.stops) {
+                data.stops.forEach(stop => {
+                    const latlng = L.latLng(stop.latitude, stop.longitude);
+                    L.marker(latlng)
+                        .addTo(searchStopMarkers)
+                        .bindPopup(`<b>${stop.stop_name}</b> (ID: ${stop.stop_id})`);
+                });
+            }  
+
+            if (data.routes) {
+                data.routes.forEach(route => {
+                    if (route.coordinates) {
+                        const polyline = route.coordinates.map(c => [c.latitude, c.longitude]);
+                        L.polyline(polyline, {
+                            color: 'blue',
+                            weight: 5,
+                            opacity: 0.7
+                        }).addTo(searchRouteLines)
+                          .bindPopup(`Route ${route.route_id} (Trip ${route.trip_id})`);
+                    } 
+                });
+            }
+        
+            if (searchStopMarkers.getLayers().length > 0 || searchRouteLines.getLayers().length > 0) {
+                const bounds = searchStopMarkers.getBounds().isValid() 
+                    ? searchStopMarkers.getBounds() : searchRouteLines.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, {padding: [50, 50]});
+                }
+            }
+        }
+
+        // Function to display the search suggestions in the dropdown
+        function displaySuggestions(suggestions) {
+            const dropdown = document.getElementById('search-results-dropdown');
+            dropdown.innerHTML = ''; 
+
+            if (suggestions.length === 0) return;
+
+            suggestions.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'search-suggestion-item';
+                div.textContent = item.stop_name || item.display_name;
+                
+                div.addEventListener('click', () => {
+                    document.getElementById('search-input').value = item.stop_name || item.display_name;
+                    searchStopsAndAddresses(item.stop_name || item.display_name); 
+                    // Hide dropdown immediately after selection
+                    document.getElementById('search-results-dropdown').innerHTML = ''; 
+                });
+
+                dropdown.appendChild(div);
+            });
+        }
+        
+        function searchGeocodeFallback(query) {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=de&limit=1`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const firstResult = data[0];
+                        const lat = parseFloat(firstResult.lat);
+                        const lon = parseFloat(firstResult.lon);
+                        map.setView([lat, lon], 16);
+                        L.marker([lat, lon]).addTo(searchStopMarkers).bindPopup(`General Location: ${firstResult.display_name}`).openPopup();
+                    } else {
+                        alert(`No general address found for "${query}".`);
+                    }
+                })
+                .catch(error => console.error("Geocoding fallback failed:", error));
+        }
+
 
         // --- 6. CLICK & LOGIC ---
         map.on('click', function(e) {
             if (!userLatLng || allStopsData.length === 0) return;
 
-            clearRoutes();
+            clearRoutes(); 
 
             var destLatLng = e.latlng;
             destinationMarker = L.marker(destLatLng).addTo(map).bindPopup("<b>Destination</b>").openPopup();
-
+            // ... rest of routing logic ...
             var distDirect = userLatLng.distanceTo(destLatLng);
-
             var startStop = findNearestStop(userLatLng);
             var endStop = findNearestStop(destLatLng);
-
             if (!startStop) return;
-
             var distToFirstStop = userLatLng.distanceTo(startStop.latLng);
 
             // Decision: Walk or Bus?
             if (distDirect < distToFirstStop || distDirect < 800) {
-                // Direct Walk
-                createRoute(userLatLng, destLatLng,
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}],
-                    'walking');
+                createRoute(userLatLng, destLatLng, 
+                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
             } else {
-                // Bus Trip
                 startStop.marker.setIcon(iconBusRed);
-                startStop.marker.setZIndexOffset(1000);
+                startStop.marker.setZIndexOffset(1000); 
                 endStop.marker.setIcon(iconBusRed);
                 endStop.marker.setZIndexOffset(1000);
-
-                // 1. Walk
-                createRoute(userLatLng, startStop.latLng,
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
-
-                // 2. Bus
+                createRoute(userLatLng, startStop.latLng, [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
                 if (startStop.id !== endStop.id) {
-                    createRoute(startStop.latLng, endStop.latLng,
-                        [{color: 'green', opacity: 0.8, weight: 7}], 'driving');
+                    createRoute(startStop.latLng, endStop.latLng, [{color: 'green', opacity: 0.8, weight: 7}], 'driving');
                 }
-
-                // 3. Walk
-                createRoute(endStop.latLng, destLatLng,
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
+                createRoute(endStop.latLng, destLatLng, [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
             }
-
+            
             var bounds = L.latLngBounds([userLatLng, destLatLng]);
             map.fitBounds(bounds, {padding: [50, 50]});
         });
@@ -456,202 +482,101 @@
         function createRoute(start, end, styleStyles, mode) {
             var control = L.Routing.control({
                 waypoints: [start, end],
-                router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1',
-                    profile: mode
-                }),
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1', profile: mode }),
                 routeWhileDragging: false,
-                addWaypoints: false,
-                draggableWaypoints: false,
-                fitSelectedRoutes: false,
-                show: false,
-                createMarker: function() { return null; },
+                addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: false, 
+                show: false, createMarker: function() { return null; }, 
                 lineOptions: { styles: styleStyles }
             }).addTo(map);
             routeControls.push(control);
+        }
+        
         // --- 7. SEARCH & API COMMUNICATION ---
         async function searchStopsAndAddresses(query) {
-            if (query.length < 3) {
-            alert("Please enter at least 3 characters to search.");
-            return;
-        }
-    
-        // Clear any previous route lines or markers
-        clearSearchResults();
+            if (query.length < 3) { alert("Please enter at least 3 characters to search."); return; }
+            clearSearchResults();
 
-        const requestData = {
-            type: "SearchRequest",
-            payload: { query: query }
-        };
-
-        console.log("Sending search request to backend:", requestData);
-    
-        // Replace with your actual backend search URL
-        const API_URL = "http://localhost:5000/api/search"; 
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(requestData)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            /**
-            * The response is expected to match the MapDataResponse structure:
-            * { "type": "MapDataResponse", "payload": { "stops": [...], "routes": [...] } }
-            */
-            const result = await response.json();
-        
-            if (result.payload && (result.payload.stops.length > 0 || result.payload.routes.length > 0)) {
-                drawStopsAndRoutes(result.payload);
-            } else {
-                alert(`No transit stops or routes found for "${query}".`);
-            }
-
-        } catch (error) {
-            console.error("Search API failed. Check if your Python backend is running:", error);
-            // Fallback to Nominatim for general addresses if the transit search fails
-            searchGeocodeFallback(query); 
-        }
-    }}
-
-    // Add event listener for the search bar (e.g., when the user presses Enter)
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            const query = e.target.value.trim();
-            searchStopsAndAddresses(query);
-        }
-    });
-
-    // Add event listener for the Locate Me button
-    document.getElementById('locate-btn').addEventListener('click', function() {
-        // Re-use the existing geolocation logic from Section 3 of your original file
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
-                map.setView(userLatLng, 15);
-                // Optionally, update the existing user marker
-                if (userMarker) {
-                    userMarker.setLatLng(userLatLng);
-                } else {
-                    userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>").openPopup();
-                }
-            }, 
-            function() { alert("Location could not be retrieved."); }, 
-            { enableHighAccuracy: true }
-        );
-    });
-    // Global Layer Groups to manage elements (easier to clear)
-    var searchStopMarkers = L.layerGroup().addTo(map);
-    var searchRouteLines = L.layerGroup().addTo(map);
-
-    function clearSearchResults() {
-        // Remove markers and lines from the map
-        searchStopMarkers.clearLayers();
-        searchRouteLines.clearLayers();
-    
-        // Also clear any previous routing control drawn during the route finding logic (File 1, Section 6)
-        clearRoutes(); 
-    }
-
-    function drawStopsAndRoutes(data) {
-        clearSearchResults(); // Start fresh
-
-        // --- Draw Stops ---  
-        if (data.stops) {
-            data.stops.forEach(stop => {
-                const latlng = L.latLng(stop.latitude, stop.longitude);
-                // Use a simple marker for search results, or a custom one if defined
-                L.marker(latlng)
-                    .addTo(searchStopMarkers)
-                    .bindPopup(`<b>${stop.stop_name}</b> (ID: ${stop.stop_id})`);
-            });
-        }   
-
-        // --- Draw Routes ---
-        if (data.routes) {
-            data.routes.forEach(route => {
-                if (route.coordinates) {
-                    // Route delivered as polylines (R15 example)
-                    const polyline = route.coordinates.map(c => [c.latitude, c.longitude]);
-                    L.polyline(polyline, {
-                        color: 'blue',
-                        weight: 5,
-                        opacity: 0.7
-                    }).addTo(searchRouteLines)
-                    .bindPopup(`Route ${route.route_id} (Trip ${route.trip_id})`);
-                } 
-                // NOTE: Routes defined by 'stops' array (R12 example) would require 
-                // matching stop_ids to coordinates, which is more complex. We draw 
-                // the polylines where coordinates are provided.
-            });
-        }
-    
-        // Fit the map to the bounds of the drawn data
-        if (searchStopMarkers.getLayers().length > 0 || searchRouteLines.getLayers().length > 0) {
-            const bounds = searchStopMarkers.getBounds().isValid() 
-                ? searchStopMarkers.getBounds() : searchRouteLines.getBounds();
-            if (bounds.isValid()) {
-                map.fitBounds(bounds, {padding: [50, 50]});
-            }
-        }
-    }
-    // Function to display the search suggestions in the dropdown
-    function displaySuggestions(suggestions) {
-        const dropdown = document.getElementById('search-results-dropdown');
-        dropdown.innerHTML = ''; // Clear previous results
-
-        if (suggestions.length === 0) return;
-
-        suggestions.forEach(item => {
-            // Create the suggestion element
-            const div = document.createElement('div');
-            div.className = 'search-suggestion-item';
-            div.textContent = item.stop_name || item.display_name;
+            const requestData = { type: "SearchRequest", payload: { query: query } };
+            console.log("📡 Sending search request to backend:", requestData);
             
-            // Attach click event to run the full search when selected
-            div.addEventListener('click', () => {
-                document.getElementById('search-input').value = item.stop_name || item.display_name;
-                searchStopsAndAddresses(item.stop_name || item.display_name); // Run the full search API call
-                dropdown.innerHTML = ''; // Hide dropdown after selection
-            });
+            const API_URL = "http://localhost:5000/api/search"; 
 
-            dropdown.appendChild(div);
-        });
-    }
-    // --- NEW: Live Search Input Listener ---
-    document.getElementById('search-input').addEventListener('input', function(e) {
-        const query = e.target.value.trim();
-        if (query.length > 2) {
-            // NOTE: You would typically call a new, fast API endpoint here, e.g.,
-            // fetchSuggestions(query). For now, we'll simulate the data.
-        
-            // --- SIMULATED DATA (REPLACE WITH REAL API CALL LATER) ---
-            const mockSuggestions = [
-                { stop_name: "Central Station West", stop_id: "123" },
-                { stop_name: "Central Station East", stop_id: "456" },
-                { stop_name: "Market Square Station", stop_id: "789" },
-            ].filter(s => s.stop_name.toLowerCase().includes(query.toLowerCase()));
-        
-            displaySuggestions(mockSuggestions);
-            // --- END SIMULATED DATA ---
-        
-        } else {
-            document.getElementById('search-results-dropdown').innerHTML = ''; // Clear if query is too short
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+                if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
+                const result = await response.json();
+                
+                if (result.payload && (result.payload.stops.length > 0 || result.payload.routes.length > 0)) {
+                    drawStopsAndRoutes(result.payload);
+                } else {
+                    searchGeocodeFallback(query); 
+                }
+            } catch (error) {
+                console.error("Search API failed. Check if your Python backend is running:", error);
+                searchGeocodeFallback(query); 
+            }
         }
-    });
 
-    // Clear dropdown when input loses focus (user clicks away)
-    document.getElementById('search-input').addEventListener('blur', function() {
-        // Wait a short moment to allow the click event on a suggestion to fire first
-        setTimeout(() => {
-            document.getElementById('search-results-dropdown').innerHTML = '';
-        }, 200);
-    });
+        // --- 8. EVENT LISTENERS ---
+
+        // NEW: Live Search Input Listener (moved inside script block)
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            if (query.length > 2) {
+                // --- SIMULATED DATA (REPLACE WITH REAL API CALL LATER) ---
+                const mockSuggestions = [
+                    { stop_name: "Central Station West", stop_id: "123" },
+                    { stop_name: "Central Station East", stop_id: "456" },
+                    { stop_name: "Market Square Station", stop_id: "789" },
+                ].filter(s => s.stop_name.toLowerCase().includes(query.toLowerCase()));
+                displaySuggestions(mockSuggestions);
+                // --- END SIMULATED DATA ---
+            } else {
+                document.getElementById('search-results-dropdown').innerHTML = '';
+            }
+        });
+
+        // Clear dropdown when input loses focus (user clicks away)
+        document.getElementById('search-input').addEventListener('blur', function() {
+            setTimeout(() => {
+                document.getElementById('search-results-dropdown').innerHTML = '';
+            }, 200);
+        });
+
+        // Event listener for the Search button
+        document.getElementById('search-btn').addEventListener('click', function() {
+            const query = document.getElementById('search-input').value.trim();
+            searchStopsAndAddresses(query);
+        });
+        
+        // Event listener for Enter key in the search bar
+        document.getElementById('search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                searchStopsAndAddresses(query);
+            }
+        });
+
+        // Event listener for the Locate Me button
+        document.getElementById('locate-btn').addEventListener('click', function() {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
+                    map.setView(userLatLng, 15);
+                    if (userMarker) {
+                        userMarker.setLatLng(userLatLng);
+                    } else {
+                        userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>").openPopup();
+                    }
+                }, 
+                function() { alert("Location could not be retrieved."); }, 
+                { enableHighAccuracy: true }
+            );
+        });
     </script>
 </body>
 </html>
