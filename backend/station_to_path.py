@@ -1,90 +1,102 @@
 import sqlite3
-from fastapi import HTTPException
-from typing import List, Dict
 
 DB_PATH = "tomfoolery-rs-main/database.db"
 
 
-def get_routes_for_stop(stop_id: str) -> List[Dict]:
-    """
-    Fetch all routes that include a given stop, along with trips and stops on each trip.
-
-    Returns a list of dictionaries:
-    [
-        {
-            "route_id": "route123",
-            "route_name": "Route Name",
-            "trips": [
-                {
-                    "trip_id": "trip456",
-                    "current_stop_index": 3,
-                    "stops_on_route": [
-                        {"stop_id": "stop1", "stop_sequence": 1},
-                        {"stop_id": "stop2", "stop_sequence": 2},
-                        ...
-                    ]
-                },
-                ...
-            ]
-        },
-        ...
-    ]
-    """
+def get_routes_for_stop(stop_id):
     conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
-    # Find all trips that include this stop
+    # 1. Fast bulk query for all needed data
     cur.execute("""
-        SELECT t.trip_id, t.route_id, st.stop_sequence
-        FROM stoptime st
-        JOIN trip t ON st.trip_id = t.trip_id
-        WHERE st.stop_id = ?
-        ORDER BY t.route_id, t.trip_id, st.stop_sequence
+        SELECT 
+            t.trip_id,
+            t.route_id,
+            st_main.stop_sequence AS current_seq,
+
+            st_all.stop_id,
+            st_all.stop_sequence,
+            s.stop_name,
+            s.latitude,
+            s.longitude
+
+        FROM stoptime st_main
+        JOIN trip t ON st_main.trip_id = t.trip_id
+        JOIN stoptime st_all ON st_all.trip_id = t.trip_id
+        JOIN stops s ON st_all.stop_id = s.stop_id
+
+        WHERE st_main.stop_id = ?
+
+        ORDER BY t.route_id, t.trip_id, st_all.stop_sequence
     """, (stop_id,))
-    stop_times_rows = cur.fetchall()
 
-    if not stop_times_rows:
+    rows = cur.fetchall()
+    if not rows:
         conn.close()
-        raise HTTPException(status_code=404, detail=f"No trips found for stop {stop_id}")
+        return []
 
-    # Group trips by route
-    routes_dict = {}
-    for row in stop_times_rows:
-        route_id = row['route_id']
-        trip_id = row['trip_id']
-        stop_seq_at_current = row['stop_sequence']
-
-        if route_id not in routes_dict:
-            # Fetch route name
-            cur.execute("SELECT route_name FROM trip WHERE route_id = ?", (route_id,))
-            route_row = cur.fetchone()
-            route_name = route_row['route_name'] if route_row else ""
-            routes_dict[route_id] = {
-                "route_id": route_id,
-                "route_name": route_name,
-                "trips": []
-            }
-
-        # Fetch all stops on this trip
-        cur.execute("""
-            SELECT stop_id, stop_sequence
-            FROM stop_times
-            WHERE trip_id = ?
-            ORDER BY stop_sequence
-        """, (trip_id,))
-        stops_on_trip = [{"stop_id": s['stop_id'], "stop_sequence": s['stop_sequence']} for s in cur.fetchall()]
-
-        # Determine index of current stop
-        current_index = next((i for i, s in enumerate(stops_on_trip) if s['stop_id'] == stop_id), None)
-
-        routes_dict[route_id]["trips"].append({
-            "trip_id": trip_id,
-            "current_stop_index": current_index,
-            "stops_on_route": stops_on_trip
-        })
+    # 2. Load all updates once
+    cur.execute("SELECT trip_id, stop_id FROM trip_updates")
+    updates_raw = cur.fetchall()
 
     conn.close()
-    return list(routes_dict.values())
 
-print(get_routes_for_stop(379640)[0:2])
+    trip_updates = {trip_id: next_stop_id for trip_id, next_stop_id in updates_raw}
+
+    # 3. Build structured result
+    trips = {}
+    seen = set()
+
+    for (
+        trip_id, route_id, current_seq,
+        sid, seq, name, lat, lon
+    ) in rows:
+
+        if trip_id not in trips:
+            trips[trip_id] = {
+                "trip_id": trip_id,
+                "route_id": route_id,
+                "current_stop_sequence": current_seq,
+                "full_route_stops": [],
+                "last_stop": None     # <- filled later
+            }
+
+        key = (trip_id, sid, seq)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        trips[trip_id]["full_route_stops"].append({
+            "stop_id": sid,
+            "sequence": seq,
+            "name": name,
+            "lat": lat,
+            "lon": lon
+        })
+
+    # 4. For each active trip, determine the **last completed stop**
+    for trip_id, data in trips.items():
+        if trip_id not in trip_updates:
+            continue  # not active right now
+
+        next_stop_id = trip_updates[trip_id]
+
+        # find next stop sequence
+        next_stop = next((s for s in data["full_route_stops"] if s["stop_id"] == next_stop_id), None)
+        if not next_stop:
+            continue  # skip trip with corrupted update
+
+        next_seq = next_stop["sequence"]
+        last_seq = next_seq - 1
+
+        # find last stop in ordered stop list
+        last_stop = next((s for s in data["full_route_stops"] if s["sequence"] == last_seq), None)
+
+        data["last_stop"] = last_stop  # may be None if trip hasn't started yet
+
+    return list(trips.values())
+
+
+if __name__ == "__main__":
+    import json
+    print(json.dumps(get_routes_for_stop(379640)[:2], indent=2))

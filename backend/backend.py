@@ -3,12 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
-import sys
 
 # Helper modüller (mevcut dosyalarından)
 from map_data import handle_map_update_request, initialize_db
 from search import search_stations as search_stations_func
 from station_info import get_station_info
+from station_to_path import get_routes_for_stop
 
 app = FastAPI(title="GTFS Map API")
 
@@ -87,6 +87,16 @@ def station_info_endpoint(stop_id: str):
     except Exception as e:
         print(f"❌ Error in /station_info: {e}")
         return {"error": str(e), "next_trips": []}
+
+@app.get("/routes_for_stop")
+def routes_for_stop_api(stop_id: int):
+    print(f"🛣️ Route Request for stop_id={stop_id}")
+    try:
+        data = get_routes_for_stop(stop_id)
+        return data
+    except Exception as e:
+        print(f"❌ Error in /routes_for_stop: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Sağlık Kontrolü
 @app.get("/health")
