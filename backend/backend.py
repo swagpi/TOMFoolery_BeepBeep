@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
+import sys
 
-# Helper modules (from existing files)
+# Helper modules (imported from existing files)
 from map_data import handle_map_update_request, initialize_db
 from search import search_stations as search_stations_func
 from station_info import get_station_info
@@ -13,20 +14,20 @@ from station_to_path import get_routes_for_stop
 app = FastAPI(title="GTFS Map API")
 
 # -------------------------------
-# 1. CORS SETTINGS (Very Important!)
+# 1. CORS SETTINGS (Crucial!)
 # -------------------------------
-# Without this setting, Frontend (HTML) cannot access Backend.
+# Allows Frontend (HTML) to access the Backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins (For development phase)
+    allow_origins=["*"],  # Allow all origins (For development)
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS etc.)
     allow_headers=["*"],
 )
 
 # Database path
-DB_PATH = "tomfoolery-rs-main/database.db" # DB path created by the Rust project
-# Try to create DB if it doesn't exist (Optional, usually handled by Rust side)
+DB_PATH = "tomfoolery-rs-main/database.db" # Path to the DB created by Rust
+# Attempt to initialize DB if it doesn't exist
 try:
     initialize_db(DB_PATH)
     print(f"✅ Database initialized at: {DB_PATH}")
@@ -48,14 +49,15 @@ class MapRequest(BaseModel):
 # API Endpoints
 # -------------------------------
 
-# Root endpoint (Runs when http://localhost:8000 is opened in browser)
+# Root endpoint
 @app.get("/")
 def read_root():
     return {"message": "Beep Beep Backend is Running! 🚌💨"}
 
-# Map Data (Stops)
+# Map Data (Stops within bounds)
 @app.post("/map_data")
 def get_map_data(request: MapRequest):
+    print(f"📥 Map Data Request: N={request.north}, S={request.south}")
     try:
         response = handle_map_update_request(
             DB_PATH,
@@ -65,16 +67,15 @@ def get_map_data(request: MapRequest):
         return response
     except Exception as e:
         print(f"❌ Error in /map_data: {e}")
-        # Return empty data or raise error to prevent frontend crash
         raise HTTPException(status_code=500, detail=str(e))
 
-# Search
+# Search Stations
 @app.get("/search_stations")
 def search_stations_api(query: str, limit: int = 20):
     print(f"🔍 Search Request: {query}")
     return search_stations_func(query, limit)
 
-# Stop Detail Info (Trips) - For Sidebar
+# Station Detail Info (Next Trips) - For Sidebar
 @app.get("/station_info")
 def station_info_endpoint(stop_id: str):
     print(f"🚏 Station Info Request for ID: {stop_id}")
@@ -85,7 +86,7 @@ def station_info_endpoint(stop_id: str):
         print(f"❌ Error in /station_info: {e}")
         return {"error": str(e), "next_trips": []}
 
-
+# Full Route Path for a specific Trip
 @app.get("/routes_for_stop")
 def routes_for_stop_api(stop_id: str):
     print(f"🛣️ Route Request for stop_id={stop_id}")
@@ -95,7 +96,6 @@ def routes_for_stop_api(stop_id: str):
     except Exception as e:
         print(f"❌ Error in /routes_for_stop: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Health Check
 @app.get("/health")
