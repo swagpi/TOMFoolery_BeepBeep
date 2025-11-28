@@ -2,9 +2,9 @@
 
 set -e
 
-CURRENT_DIR = $PWD
-SERVICE_DIR = $PWD/services
-SERVICES = $(find $SERVICE_DIR -n "*.service")
+CURRENT_DIR=$PWD
+SERVICE_DIR=$PWD/services
+SERVICES=$(find $SERVICE_DIR -n "*.service")
 
 SYSTEMD_CONF="/etc/systemd/system.conf"
 BACKUP_CONF="/etc/systemd/system.conf.bak"
