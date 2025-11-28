@@ -3,7 +3,7 @@
 set -e
 env -i
 
-PORT=6666
+PORT=62260
 cd $HOME/TOMFoolery_BeepBeep/backend
 # cd $HOME/gits/TOMFoolery_BeepBeep/backend # TODO: Remove this line!
 echo $PWD
