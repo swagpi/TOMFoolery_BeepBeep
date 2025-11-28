@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 import uvicorn
 
-# Helper modüller (mevcut dosyalarından)
+# Helper modules (from existing files)
 from map_data import handle_map_update_request, initialize_db
 from search import search_stations as search_stations_func
 from station_info import get_station_info
@@ -13,20 +13,20 @@ from station_to_path import get_routes_for_stop
 app = FastAPI(title="GTFS Map API")
 
 # -------------------------------
-# 1. CORS AYARLARI (Çok Önemli!)
+# 1. CORS SETTINGS (Very Important!)
 # -------------------------------
-# Bu ayar olmadan Frontend (HTML) Backend'e erişemez.
+# Without this setting, Frontend (HTML) cannot access Backend.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Tüm kaynaklara izin ver (Geliştirme aşaması için)
+    allow_origins=["*"],  # Allow all origins (For development phase)
     allow_credentials=True,
-    allow_methods=["*"],  # GET, POST, OPTIONS vb. hepsine izin ver
+    allow_methods=["*"],  # Allow all methods (GET, POST, OPTIONS, etc.)
     allow_headers=["*"],
 )
 
-# Veritabanı yolu
-DB_PATH = "tomfoolery-rs-main/database.db" # Rust projesinin oluşturduğu DB yolu
-# Eğer DB yoksa oluşturmayı dene (Opsiyonel, genelde Rust tarafı halleder)
+# Database path
+DB_PATH = "tomfoolery-rs-main/database.db" # DB path created by the Rust project
+# Try to create DB if it doesn't exist (Optional, usually handled by Rust side)
 try:
     initialize_db(DB_PATH)
     print(f"✅ Database initialized at: {DB_PATH}")
@@ -34,7 +34,7 @@ except Exception as e:
     print(f"⚠️ Database warning: {e}")
 
 # -------------------------------
-# Request Modelleri
+# Request Models
 # -------------------------------
 class MapRequest(BaseModel):
     north: float
@@ -45,15 +45,15 @@ class MapRequest(BaseModel):
     max_stops: Optional[int] = 150
 
 # -------------------------------
-# API Endpointleri
+# API Endpoints
 # -------------------------------
 
-# Root endpoint (Tarayıcıda http://localhost:8000 açınca çalışır)
+# Root endpoint (Runs when http://localhost:8000 is opened in browser)
 @app.get("/")
 def read_root():
     return {"message": "Beep Beep Backend is Running! 🚌💨"}
 
-# Harita Verisi (Duraklar)
+# Map Data (Stops)
 @app.post("/map_data")
 def get_map_data(request: MapRequest):
     try:
@@ -65,16 +65,16 @@ def get_map_data(request: MapRequest):
         return response
     except Exception as e:
         print(f"❌ Error in /map_data: {e}")
-        # Frontend çökmesin diye boş veri dönelim veya hata fırlatalım
+        # Return empty data or raise error to prevent frontend crash
         raise HTTPException(status_code=500, detail=str(e))
 
-# Arama (Search)
+# Search
 @app.get("/search_stations")
 def search_stations_api(query: str, limit: int = 20):
     print(f"🔍 Search Request: {query}")
     return search_stations_func(query, limit)
 
-# Durak Detay Bilgisi (Seferler) - Sidebar için
+# Stop Detail Info (Trips) - For Sidebar
 @app.get("/station_info")
 def station_info_endpoint(stop_id: str):
     print(f"🚏 Station Info Request for ID: {stop_id}")
@@ -95,13 +95,13 @@ def routes_for_stop_api(stop_id: int):
         print(f"❌ Error in /routes_for_stop: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# Sağlık Kontrolü
+# Health Check
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 # -------------------------------
-# Çalıştırma
+# Execution
 # -------------------------------
 if __name__ == "__main__":
     print("🚀 Starting Backend Server on port 8000...")
