@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Smart Efficiency Map</title>
+    <title>Smart Efficiency Map - Live Data</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
@@ -24,32 +24,31 @@
         /* --- FONT FACE --- */
         @font-face {
             font-family: 'ZTNature-Medium';
-            src: url('ZTNature-Medium.ttf') format('truetype');
+            src: url('ZTNature-Medium.ttf') format('truetype'); /* Ensure this file exists or fallback font will trigger */
             font-weight: normal;
             font-style: normal;
         }
 
-        /* 🖼 FRAME SETUP (From File 2) */
+        /* 🖼 FRAME SETUP */
         body {
             margin: 0;
             padding: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            background: var(--bg-gray); /* Gray background */
+            font-family: 'ZTNature-Medium', system-ui, -apple-system, sans-serif;
+            background: var(--bg-gray);
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
 
-        /* The Card Container */
         .map-card {
             overflow: hidden;
             position: relative;
             width: min(1400px, 98vw);
             height: min(820px, 95vh);
             background: #ffffff;
-            border-radius: 12px; /* Rounded corners */
-            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); /* Drop shadow */
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
             padding: 8px;
             box-sizing: border-box;
             display: flex;
@@ -57,12 +56,11 @@
             gap: 6px;
         }
 
-        /* Inner container for the map to fit nicely inside the card */
         .map-inner {
             position: relative;
             flex: 1;
             border-radius: 10px;
-            overflow: hidden; /* Ensures map corners are rounded */
+            overflow: hidden;
         }
 
         #map { 
@@ -71,12 +69,9 @@
             z-index: 1; 
         }
         
-        /* Hide default routing container box */
         .leaflet-routing-container { display: none; }
 
         /* --- UI OVERLAYS --- */
-        
-        /* 1. Brand Badge */
         .brand-badge {
             position: absolute; top: 20px; right: 26px; z-index: 9999;
             background: var(--teal); color: white;
@@ -88,20 +83,20 @@
         }
         .brand-badge-dot { width: 14px; height: 14px; border-radius: 999px; background: var(--sun); }
 
-        /* 2. Search Toolbar (Positioned inside map-inner) */
+        /* Search Toolbar */
         .map-toolbar-container {
             position: absolute; top: 20px; left: 20px; z-index: 9999; width: 320px;
         }
         .map-toolbar {
             display: flex; gap: 8px; padding: 8px;
-            background-color: var(--jade); /* Using Jade background from File 2 */
+            background-color: var(--jade);
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         #search-input {
             flex: 1; padding: 8px 12px; border: 1px solid #ccc; background: white;
             border-radius: 6px; font-size: 16px; outline: none;
-            font-family: 'ZTNature-Medium', sans-serif;
+            font-family: inherit;
         }
         #search-btn {
             width: 40px; height: 40px; background-color: #f0f0f0; color: #333;
@@ -109,7 +104,7 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* 3. Search Dropdown */
+        /* Search Dropdown */
         #search-results-dropdown {
             margin-top: 5px; width: 100%; background: white;
             border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -117,19 +112,19 @@
         }
         .search-suggestion-item {
             padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee;
-            font-size: 14px; color: #333; font-family: 'ZTNature-Medium', sans-serif;
+            font-size: 14px; color: #333;
         }
         .search-suggestion-item:last-child { border-bottom: none; }
         .search-suggestion-item:hover { background-color: #f0f0f0; }
 
-        /* 4. Zoom & Locate Controls */
+        /* Zoom & Locate Controls */
         .custom-zoom-controls {
             position: absolute; bottom: 30px; right: 20px; z-index: 9999; 
             display: flex; flex-direction: column; gap: 10px; 
         }
         .zoom-btn {
             width: 45px; height: 45px; background-color: white;
-            border: 2px solid #ccc; border-radius: 50%; /* Circular */
+            border: 2px solid #ccc; border-radius: 50%;
             font-size: 24px; font-weight: bold; color: #333; cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             display: flex; align-items: center; justify-content: center;
@@ -153,7 +148,7 @@
             box-shadow: 0 4px 14px rgba(0,0,0,0.1);
         }
         .leaflet-popup-content {
-            margin: 10px 14px; font-family: 'ZTNature-Medium', sans-serif;
+            margin: 10px 14px;
             font-size: 14px; color: #333; text-align: center; font-weight: bold;
         }
         .leaflet-popup-tip-container { display: none; } 
@@ -174,7 +169,7 @@
             
             <div class="map-toolbar-container">
                 <div class="map-toolbar">
-                    <input type="text" id="search-input" placeholder="Search for a stop or address..." />
+                    <input type="text" id="search-input" placeholder="Search for a stop..." />
                     <button id="search-btn" title="Search">🔍</button>
                 </div>
                 <div id="search-results-dropdown"></div>
@@ -192,6 +187,7 @@
 
     <script>
         // --- CONFIGURATION ---
+        const BACKEND_URL = "http://localhost:8000"; // Adjust if your backend is on a different port/IP
         const SNAP_RADIUS_METERS = 50; 
         const ABSOLUTE_MIN_WALK = 200; 
 
@@ -218,7 +214,7 @@
         }
 
         // --- 2. MAP SETUP ---
-        var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([0,0], 2);
+        var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13); // Default view, will be updated by geo
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ 
             attribution: '&copy; OpenStreetMap contributors', noWrap: true 
         }).addTo(map);
@@ -229,7 +225,8 @@
         var destinationMarker = null;
         var userMarker = null;
         
-        // Search Groups
+        // Layer Group for Stops (to easily clear them)
+        var stopsLayerGroup = L.layerGroup().addTo(map);
         var searchStopMarkers = L.layerGroup().addTo(map);
 
         // --- 3. GET LOCATION ---
@@ -242,54 +239,91 @@
             if(userMarker) map.removeLayer(userMarker);
             userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
             
-            // Only generate mock stops if we haven't already
-            if(allStopsData.length === 0) generateStaticMockStops(userLatLng);
-            
-            logBoundsForBackend();
+            // Initial Fetch
+            fetchMapDataFromBackend();
         }
 
         function error() { 
             console.log("Location denied. Defaulting to center."); 
-            var defaultLoc = L.latLng(51.505, -0.09);
-            map.setView(defaultLoc, 13);
-            generateStaticMockStops(defaultLoc);
+            // Fallback location (e.g., central Germany or existing mocked center)
+            var defaultLoc = L.latLng(51.0, 8.0);
+            userLatLng = defaultLoc;
+            map.setView(defaultLoc, 14);
+            if(userMarker) map.removeLayer(userMarker);
+            userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
+            fetchMapDataFromBackend();
         }
 
-        // --- 4. BACKEND & DATA ---
-        map.on('moveend', function() { logBoundsForBackend(); });
+        // --- 4. BACKEND INTERACTION ---
+        
+        // Fetch data whenever the map moves
+        map.on('moveend', function() { 
+            fetchMapDataFromBackend(); 
+        });
 
-        function logBoundsForBackend() {
-            var bounds = map.getBounds();
-            console.log("📡 Viewport changed. Bounds:", bounds.toBBoxString());
-        }
+        async function fetchMapDataFromBackend() {
+            const bounds = map.getBounds();
+            
+            // Construct the request payload matching backend.py MapRequest model
+            const requestBody = {
+                north: bounds.getNorth(),
+                south: bounds.getSouth(),
+                east: bounds.getEast(),
+                west: bounds.getWest(),
+                buffer_meters: 100, // Small buffer to fetch stops just outside view
+                max_stops: 150      // Limit to prevent frontend lag
+            };
 
-        function generateStaticMockStops(center) {
-            let mockStopsPayload = [];
-            for (let i = 0; i < 30; i++) { 
-                let latOffset = (Math.random() - 0.5) * 0.04;
-                let lngOffset = (Math.random() - 0.5) * 0.04;
-                mockStopsPayload.push({
-                    "stop_id": "stop_" + (i + 1000), 
-                    "stop_name": "Station " + (i + 1),
-                    "latitude": center.lat + latOffset,
-                    "longitude": center.lng + lngOffset
+            try {
+                const response = await fetch(`${BACKEND_URL}/map_data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.type === "MapDataResponse" && data.payload && data.payload.stops) {
+                    updateMapWithBackendData(data.payload.stops);
+                } else {
+                    console.warn("Received unexpected data format:", data);
+                }
+
+            } catch (error) {
+                console.error("Error fetching map data:", error);
             }
-            updateMapWithBackendData(mockStopsPayload);
         }
 
         function updateMapWithBackendData(stopsList) {
+            // Clear existing stops to avoid duplicates and remove out-of-view stops
+            stopsLayerGroup.clearLayers();
+            allStopsData = []; // Reset internal data array
+
             stopsList.forEach(stopData => {
                 let stopPos = L.latLng(stopData.latitude, stopData.longitude);
-                let marker = L.marker(stopPos, {icon: iconBusGray}).addTo(map);
                 
+                // Create marker
+                let marker = L.marker(stopPos, {icon: iconBusGray});
+                
+                // Bind popup
                 marker.bindPopup(stopData.stop_name, { offset: [0, -10], autoPan: true });
 
+                // Click event for routing
                 marker.on('click', function(e) { 
                     L.DomEvent.stopPropagation(e); 
                     processJourney(e.latlng, true, stopData.stop_id); 
                 });
                 
+                // Add to layer group
+                stopsLayerGroup.addLayer(marker);
+                
+                // Add to our local data array for searching and routing logic
                 allStopsData.push({ 
                     stop_id: stopData.stop_id, 
                     stop_name: stopData.stop_name, 
@@ -297,11 +331,14 @@
                     marker: marker 
                 });
             });
+            console.log(`Loaded ${stopsList.length} stops from backend.`);
         }
 
         function findNearestStop(targetLatLng) {
             let nearest = null;
             let minDist = Infinity;
+            
+            // We search in the currently loaded stops
             allStopsData.forEach(stop => {
                 let dist = targetLatLng.distanceTo(stop.latLng);
                 if (dist < minDist) { minDist = dist; nearest = stop; }
@@ -316,7 +353,7 @@
             routeControls = [];
             if (destinationMarker) map.removeLayer(destinationMarker);
             
-            // Reset icons
+            // Reset icons to Gray
             allStopsData.forEach(stop => { 
                 stop.marker.setIcon(iconBusGray); 
                 stop.marker.setZIndexOffset(0); 
@@ -328,14 +365,14 @@
             document.getElementById('search-results-dropdown').style.display = 'none';
         }
 
-        // --- 6. ROUTING LOGIC (The Smart Core) ---
+        // --- 6. ROUTING LOGIC (Smart Core) ---
         map.on('click', function(e) {
             var clickedLoc = e.latlng;
             var finalDestination = clickedLoc;
             var snapped = false;
             var snappedId = null;
 
-            // Snap logic
+            // Snap logic: if clicked near a stop, snap to it
             var result = findNearestStop(clickedLoc);
             if (result.stop && result.distance < SNAP_RADIUS_METERS) {
                 finalDestination = result.stop.latLng;
@@ -346,23 +383,35 @@
         });
 
         function processJourney(destLatLng, isBusStop, stopId) {
-            if (!userLatLng || allStopsData.length === 0) return;
+            if (!userLatLng) {
+                alert("Waiting for user location...");
+                return;
+            }
+            
+            if (allStopsData.length === 0) {
+                console.log("No stops loaded nearby.");
+                // Even if no stops, we can allow walking route
+            }
 
             clearRoutes(); 
-            clearSearchResults(); // Clear search pins if clicking map
+            clearSearchResults();
 
             var distDirect = userLatLng.distanceTo(destLatLng);
             var startData = findNearestStop(userLatLng);
-            var endData = (isBusStop && stopId) 
-                ? { stop: allStopsData.find(s => s.stop_id === stopId) }
-                : findNearestStop(destLatLng);
+            
+            // Find end stop object
+            var endStop = null;
+            if (isBusStop && stopId) {
+                endStop = allStopsData.find(s => s.stop_id === stopId);
+            } else {
+                let nearestEnd = findNearestStop(destLatLng);
+                if(nearestEnd.stop) endStop = nearestEnd.stop;
+            }
                 
             var startStop = startData.stop;
-            var endStop = endData.stop;
             
-            if (!startStop || !endStop) return;
-
-            if (isBusStop) {
+            // Destination Marker logic
+            if (isBusStop && endStop) {
                 endStop.marker.openPopup();
             } else {
                 destinationMarker = L.marker(destLatLng, {icon: iconDestination}).addTo(map);
@@ -370,22 +419,25 @@
             }
 
             // === SMART ALGORITHM ===
-            var distToStart = userLatLng.distanceTo(startStop.latLng);
-            var distFromEnd = endStop.latLng.distanceTo(destLatLng);
-            var totalBusOverheadWalk = distToStart + distFromEnd;
+            var useBus = false;
+            
+            // Only consider bus if we have valid start and end stops
+            if (startStop && endStop && startStop.stop_id !== endStop.stop_id) {
+                var distToStart = userLatLng.distanceTo(startStop.latLng);
+                var distFromEnd = endStop.latLng.distanceTo(destLatLng);
+                var totalBusOverheadWalk = distToStart + distFromEnd;
+                
+                // Simple heuristic: If direct walk is very short OR walking to/from stops is longer than direct
+                if (distDirect > ABSOLUTE_MIN_WALK && distDirect > totalBusOverheadWalk) {
+                    useBus = true;
+                }
+            }
 
-            var useBus = true;
-            if (startStop.stop_id === endStop.stop_id) { useBus = false; }
-            else if (distDirect < ABSOLUTE_MIN_WALK) { useBus = false; }
-            else if (distDirect < totalBusOverheadWalk) { useBus = false; } // If walking to bus stops takes longer than walking direct
-
-            // Styles using Palette Variables
-            // Jade/Green for Walking
+            // Styles
             var walkStyles = [ 
                 { color: '#6E8F72', opacity: 1, weight: 7 }, 
                 { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10' } 
             ];
-            // Teal for Bus
             var busStyles = [ 
                 { color: '#054A52', opacity: 0.8, weight: 8 }, 
                 { color: '#23CED9', opacity: 1, weight: 4 } 
@@ -396,19 +448,24 @@
                 createRoute(userLatLng, destLatLng, walkStyles, 'walking');
             } else {
                 console.log("Decision: Take Bus");
+                // Highlight active stops
                 startStop.marker.setIcon(iconBusRed);
                 startStop.marker.setZIndexOffset(1000);
                 endStop.marker.setIcon(iconBusRed);
                 endStop.marker.setZIndexOffset(1000);
 
+                // 1. Walk to Start Stop
                 createRoute(userLatLng, startStop.latLng, walkStyles, 'walking');
-                createRoute(startStop.latLng, endStop.latLng, busStyles, 'driving'); // Using driving profile to simulate bus speed
+                // 2. Bus Ride (Visualized straight or via OSRM driving)
+                createRoute(startStop.latLng, endStop.latLng, busStyles, 'driving'); 
                 
+                // 3. Walk from End Stop to Destination (if not exactly at stop)
                 if (!isBusStop) {
                     createRoute(endStop.latLng, destLatLng, walkStyles, 'walking');
                 }
             }
             
+            // Fit bounds
             var bounds = L.latLngBounds([userLatLng, destLatLng]);
             map.fitBounds(bounds, {padding: [80, 80]}); 
         }
@@ -424,7 +481,7 @@
             routeControls.push(control);
         }
 
-        // --- 7. SEARCH FEATURE (Simulated) ---
+        // --- 7. SEARCH FEATURE (Using Backend Data) ---
         const searchInput = document.getElementById('search-input');
         const searchDropdown = document.getElementById('search-results-dropdown');
 
@@ -433,14 +490,11 @@
             searchDropdown.innerHTML = '';
             
             if (query.length > 2) {
-                // Mock filtering of current visible stops
+                // Filter currently visible stops
+                // Note: A full search would require a separate backend endpoint (GET /search_stations?query=...)
+                // For now, we filter what's loaded on the map.
                 const matches = allStopsData.filter(s => s.stop_name.toLowerCase().includes(query));
                 
-                // Mock "API" results
-                if(matches.length === 0) {
-                     matches.push({ stop_name: "Mock External Result 1", latLng: L.latLng(userLatLng.lat + 0.01, userLatLng.lng + 0.01), isExternal: true });
-                }
-
                 if (matches.length > 0) {
                     searchDropdown.style.display = 'block';
                     matches.forEach(item => {
@@ -453,6 +507,7 @@
                         searchDropdown.appendChild(div);
                     });
                 } else {
+                    // Optional: Call backend search API here if desired
                     searchDropdown.style.display = 'none';
                 }
             } else {
@@ -464,16 +519,9 @@
             searchInput.value = item.stop_name;
             searchDropdown.style.display = 'none';
             
-            if(item.isExternal) {
-                 let m = L.marker(item.latLng, {icon: iconDestination}).addTo(searchStopMarkers);
-                 m.bindPopup("<b>" + item.stop_name + "</b>").openPopup();
-                 map.setView(item.latLng, 16);
-                 processJourney(item.latLng, false, null);
-            } else {
-                map.setView(item.latLng, 16);
-                item.marker.openPopup();
-                processJourney(item.latLng, true, item.stop_id);
-            }
+            map.setView(item.latLng, 16);
+            item.marker.openPopup();
+            processJourney(item.latLng, true, item.stop_id);
         }
 
         // --- 8. LOCATE ME BTN ---
