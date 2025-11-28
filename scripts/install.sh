@@ -2,7 +2,7 @@
 
 set -e
 
-CURRENT_DIR=$HOME/tomfoolery/TOMFoolery_BeepBeep
+CURRENT_DIR=$HOME/TOMFoolery_BeepBeep
 SERVICE_DIR=$CURRENT_DIR/services
 USER_SERVICE_DIR=$HOME/.config/systemd/user
 SERVICES=$(find "$SERVICE_DIR" -name "*.service")
