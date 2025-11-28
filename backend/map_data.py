@@ -104,6 +104,12 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     north, south, east, west = bounds["north"], bounds["south"], bounds["east"], bounds["west"]
     buffer_meters = bounds.get("buffer_meters", 0)
 
+    if north-south > 0.1:
+        return {"type": "MapDataResponse", "payload": {"stops": [], "routes": []}}
+
+
+    print(f"North {north}, South {south}, West {west}, east {east}")
+
     # Convert buffer meters to degrees
     deg_buf = buffer_meters / 111_320
     north += deg_buf
@@ -121,14 +127,15 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
         FROM stops
         WHERE latitude BETWEEN ? AND ?
           AND longitude BETWEEN ? AND ?
-    """, (north, south, east, west))
+    """, (south, north, west, east))
     all_stops = [dict(row) for row in cur.fetchall()]
     if not all_stops:
         conn.close()
         return {"type": "MapDataResponse", "payload": {"stops": [], "routes": []}}
 
     # Randomly sample stops if too many
-    stops = random.sample(all_stops, max_stops) if len(all_stops) > max_stops else all_stops
+    #stops = random.sample(all_stops, max_stops) if len(all_stops) > max_stops else all_stops
+    stops = all_stops
     stop_ids_in_area = {s["stop_id"] for s in stops}
 
     # Temp table for sampled stops
@@ -140,6 +147,7 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
         SELECT DISTINCT st.trip_id
         FROM stoptime st
         JOIN tmp_stops ts ON st.stop_id = ts.stop_id
+        LIMIT 100
     """)
     trip_ids = [row["trip_id"] for row in cur.fetchall()]
     if not trip_ids:
@@ -156,6 +164,7 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
         FROM trip
         WHERE trip_id IN (SELECT trip_id FROM tmp_trips)
         GROUP BY route_id
+        LIMIT 100
     """)
     rep_trips = {row["route_id"]: row["rep_trip_id"] for row in cur.fetchall()}
 
@@ -169,6 +178,7 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
             JOIN stops s ON st.stop_id = s.stop_id
             WHERE st.trip_id IN ({q_marks})
             ORDER BY st.trip_id, st.stop_sequence
+            LIMIT 100
         """, tuple(rep_trip_ids))
 
         stops_by_trip = {}
