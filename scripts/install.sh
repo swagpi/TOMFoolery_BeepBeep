@@ -28,7 +28,7 @@ fi
 for SERVICE in $SERVICES; do
     if ! [[ -f "$USER_SERVICE_DIR/$(basename $SERVICE)" ]]; then
         echo "copying service $SERVICE"
-        cp "$SERVICE" "$USER_SERVICE_DIR/$(basename $SERVICE)"
+        cp -f "$SERVICE" "$USER_SERVICE_DIR/$(basename $SERVICE)"
     fi
 done
 
