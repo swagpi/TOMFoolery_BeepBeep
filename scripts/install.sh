@@ -9,7 +9,9 @@ SERVICES=$(find "$SERVICE_DIR" -name "*.service")
 
 RUST_DIR=rust
 
-
+if ! [[ -d $DB_DIR ]]; do
+    mkdir -p $DB_DIR
+fi
 
 pushd "$RUST_DIR"
     cargo build --release 
