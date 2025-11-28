@@ -1,6 +1,7 @@
 [Unit]
 Description = The BeepBeep backend
 After = network-online.target pull_data.service
+Wants = pull_data.service
 StartLimitIntervalSec = 10
 
 [Service]
