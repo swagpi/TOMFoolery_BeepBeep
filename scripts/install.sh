@@ -5,6 +5,9 @@ set -e
 
 CURRENT_DIR=$HOME/TOMFoolery_BeepBeep
 SERVICE_DIR=$CURRENT_DIR/services
+NGINX_SYSD_DIR=/etc/systemd/system/nginx.service.d
+NGINX_SYSD_CONF="$NGINX_SYSD_DIR/override.conf"
+NGINX_SYSD_LOCAL="config/override.conf"
 USER_SERVICE_DIR=$HOME/.config/systemd/user
 SERVICES=$(find "$SERVICE_DIR" -maxdepth 1 -mindepth 1)
 
@@ -29,6 +32,13 @@ for SERVICE in $SERVICES; do
     echo "copying service $SERVICE"
     cp -f "$SERVICE" "$USER_SERVICE_DIR/$(basename $SERVICE)"
 done
+
+if ! [[ -f "$NGINX_SYSD_CONF" ]]; then
+    echo "copying nginx-config-path override"
+    mkdir -p "$NGINX_SYSD_DIR"
+    cp -f "$NGINX_SYSD_LOCAL" "$NGINX_SYSD_CONF" 
+fi
+
 
 sudo loginctl enable-linger $USER
 
