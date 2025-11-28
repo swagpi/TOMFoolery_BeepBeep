@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
+      <meta charset="utf-8" />
     <title>Map with Custom Zoom Buttons</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -10,37 +10,143 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        /* 🎨 Tropical Jade Sunrise palette */
+        :root {
+            --coral:   #FCA47C;
+            --sun:     #F9D779;
+            --aqua:    #23CED9;
+            --jade:    #A1CCA6;
+            --teal:    #097C87;
+        }
+
+        /* Center the framed card */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, sans-serif;
+            background: #f3f4f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* 🖼 Frame around the map */
+        .map-card {
+            overflow: hidden;
+            position: relative;
+            width: min(1400px, 98vw);   /* narrower width */
+            height: min(820px, 95vh);   /* taller frame for bigger map */
+            background: #ffffff;
+            border-radius: 12px;        /* thinner corners */
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+            padding: 8px;              /* smaller padding -> bigger map */
+            
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 6px; 
+        }
+
+        /* Beep Beep logo badge */
+        .brand-badge {
+             position: absolute;
+    top: 20px;        /* was -22px */
+    right: 26px;
+    background: var(--teal);
+    color: #ffffff;
+    padding: 10px 22px;
+    border-radius: 999px;
+    border: 4px solid #ffffff;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+    font-size: 17px;
+    font-weight: 800;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: 0.1em;
+    z-index: 10000;
+}
+
+.brand-badge-dot {
+    width: 14px;                     /* bigger dot */
+    height: 14px;
+    border-radius: 999px;
+    background: var(--sun);
+}
+
+        /* Optional small header text inside the card */
+        .map-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        .map-card-pill {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--jade);
+            color: #074c51;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* Container that holds the Leaflet map */
+        .map-inner {
+                position: relative;
+                flex: 1;
+                border-radius: 14px;   /* slightly smaller */
+                overflow: hidden;
+}
+
+        /* Actual Leaflet map div */
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
         /* Hide routing text instructions */
         .leaflet-routing-container { display: none; }
 
         /* --- MARKER STYLES --- */
         .custom-bus-icon {
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; border: 2px solid white;  
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;          
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            font-size: 12px;
         }
         .bus-active {
-            background-color: #ff0000; width: 24px !important; height: 24px !important;
-            margin-left: -12px !important; margin-top: -12px !important;
+            background-color: #ff0000;
+            width: 24px !important;
+            height: 24px !important;
+            margin-left: -12px !important;
+            margin-top: -12px !important;
         }
         .bus-passive {
-            background-color: #808080; opacity: 0.9;
-            width: 20px !important; height: 20px !important;
-            margin-left: -10px !important; margin-top: -10px !important;
-            font-size: 10px;          
+            background-color: #808080;
+            opacity: 0.9;
+            width: 20px !important;
+            height: 20px !important;
+            margin-left: -10px !important;
+            margin-top: -10px !important;
+            font-size: 10px;
         }
 
-        /* --- NEW: CUSTOM ZOOM BUTTON STYLES --- */
+        /* --- CUSTOM ZOOM BUTTON STYLES --- */
         .custom-zoom-controls {
             position: absolute;
-            bottom: 30px;  /* Distance from bottom */
-            right: 20px;   /* Distance from right */
-            z-index: 9999; /* Ensure it stays on top of the map */
+            bottom: 30px;
+            right: 20px;
+            z-index: 9999;
             display: flex;
-            flex-direction: column; /* Stack buttons vertically */
-            gap: 10px; /* Space between buttons */
+            flex-direction: column;
+            gap: 10px;
         }
 
         .zoom-btn {
@@ -57,7 +163,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
         }
 
         .zoom-btn:active {
@@ -186,18 +292,26 @@
 </head>
 <body>
 
-    <div id="map"></div>
-    <div class="map-toolbar">
-        <input type="text" id="search-input" placeholder="Search for a stop or address..." />
-        <button id="search-btn" title="Search">🔍</button>
-        <div id="search-results-dropdown">
+    <!-- 🖼 FRAME -->
+    <div class="map-card">
+        <!-- 🔔 Beep Beep logo -->
+        <div class="brand-badge">
+            <span class="brand-badge-dot"></span>
+            <span>beep beep</span>
+        </div>
+
+
+        <!-- Map container inside the frame -->
+        <div class="map-inner">
+            <div id="map"></div>
+
+            <div class="custom-zoom-controls">
+                <button class="zoom-btn" onclick="map.zoomIn()">+</button>
+                <button class="zoom-btn" onclick="map.zoomOut()">-</button>
+            </div>
         </div>
     </div>
-    <div class="custom-zoom-controls">
-        <button id="locate-btn" title="Locate Me">📍</button>
-        <button class="zoom-btn" onclick="map.zoomIn()">+</button>
-        <button class="zoom-btn" onclick="map.zoomOut()">-</button>
-    </div>
+
     <script>
         // --- 1. ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '🚌', iconSize: [24, 24] });
@@ -205,25 +319,30 @@
 
         function createUserMarker(latlng) {
             return L.circleMarker(latlng, {
-                radius: 8, fillColor: "#2196F3", color: "#FFF", weight: 2, fillOpacity: 1
+                radius: 8,
+                fillColor: "#2196F3",
+                color: "#FFF",
+                weight: 2,
+                fillOpacity: 1
             });
         }
 
         // --- 2. MAP SETUP ---
         var map = L.map('map', {
-            dragging: true, 
-            tap: true, 
+            dragging: true,
+            tap: true,
             zoomControl: false // Disable default Leaflet zoom control
         }).setView([0,0], 1);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{
-            attribution: '&copy; MapTiler &copy; OpenStreetMap',
+        // 🔗 HOT OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
             noWrap: true
         }).addTo(map);
 
         var userLatLng = null;
-        var allStopsData = []; 
-        var routeControls = []; 
+        var allStopsData = [];
+        var routeControls = [];
         var destinationMarker = null;
         var userMarker = null;
 
@@ -231,10 +350,10 @@
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
 
         function success(position) {
-            userLatLng = L.latLng(position.coords.latitude, position.coords.longitude); 
+            userLatLng = L.latLng(position.coords.latitude, position.coords.longitude);
             map.setView(userLatLng, 15);
             userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
-            
+
             generateStaticMockStops(userLatLng);
             logBoundsForBackend();
         }
@@ -255,7 +374,7 @@
 
         // --- 5. STATIC MOCK DATA ---
         function generateStaticMockStops(center) {
-            for (let i = 0; i < 30; i++) { 
+            for (let i = 0; i < 30; i++) {
                 let latOffset = (Math.random() - 0.5) * 0.04;
                 let lngOffset = (Math.random() - 0.5) * 0.04;
                 let stopPos = L.latLng(center.lat + latOffset, center.lng + lngOffset);
@@ -280,7 +399,7 @@
             if (destinationMarker) map.removeLayer(destinationMarker);
             allStopsData.forEach(stop => {
                 stop.marker.setIcon(iconBusGray);
-                stop.marker.setZIndexOffset(0); 
+                stop.marker.setZIndexOffset(0);
             });
         }
 
@@ -288,16 +407,16 @@
         map.on('click', function(e) {
             if (!userLatLng || allStopsData.length === 0) return;
 
-            clearRoutes(); 
+            clearRoutes();
 
             var destLatLng = e.latlng;
             destinationMarker = L.marker(destLatLng).addTo(map).bindPopup("<b>Destination</b>").openPopup();
 
             var distDirect = userLatLng.distanceTo(destLatLng);
-            
+
             var startStop = findNearestStop(userLatLng);
             var endStop = findNearestStop(destLatLng);
-            
+
             if (!startStop) return;
 
             var distToFirstStop = userLatLng.distanceTo(startStop.latLng);
@@ -305,33 +424,33 @@
             // Decision: Walk or Bus?
             if (distDirect < distToFirstStop || distDirect < 800) {
                 // Direct Walk
-                createRoute(userLatLng, destLatLng, 
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 
+                createRoute(userLatLng, destLatLng,
+                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}],
                     'walking');
             } else {
                 // Bus Trip
                 startStop.marker.setIcon(iconBusRed);
-                startStop.marker.setZIndexOffset(1000); 
+                startStop.marker.setZIndexOffset(1000);
                 endStop.marker.setIcon(iconBusRed);
                 endStop.marker.setZIndexOffset(1000);
 
                 // 1. Walk
-                createRoute(userLatLng, startStop.latLng, 
+                createRoute(userLatLng, startStop.latLng,
                     [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
 
                 // 2. Bus
                 if (startStop.id !== endStop.id) {
-                    createRoute(startStop.latLng, endStop.latLng, 
+                    createRoute(startStop.latLng, endStop.latLng,
                         [{color: 'green', opacity: 0.8, weight: 7}], 'driving');
                 }
 
                 // 3. Walk
-                createRoute(endStop.latLng, destLatLng, 
+                createRoute(endStop.latLng, destLatLng,
                     [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
             }
-            
-             var bounds = L.latLngBounds([userLatLng, destLatLng]);
-             map.fitBounds(bounds, {padding: [50, 50]});
+
+            var bounds = L.latLngBounds([userLatLng, destLatLng]);
+            map.fitBounds(bounds, {padding: [50, 50]});
         });
 
         function createRoute(start, end, styleStyles, mode) {
@@ -339,14 +458,14 @@
                 waypoints: [start, end],
                 router: L.Routing.osrmv1({
                     serviceUrl: 'https://router.project-osrm.org/route/v1',
-                    profile: mode 
+                    profile: mode
                 }),
                 routeWhileDragging: false,
                 addWaypoints: false,
                 draggableWaypoints: false,
-                fitSelectedRoutes: false, 
-                show: false, 
-                createMarker: function() { return null; }, 
+                fitSelectedRoutes: false,
+                show: false,
+                createMarker: function() { return null; },
                 lineOptions: { styles: styleStyles }
             }).addTo(map);
             routeControls.push(control);
