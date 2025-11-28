@@ -60,3 +60,4 @@ def download_rt_gtfs_data(url: str="https://realtime.gtfs.de/realtime-free.pb"):
     # Apparently no vehicle positions in german data
 
     return [vehicles, trip_updates, alerts]
+
