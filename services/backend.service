@@ -12,4 +12,4 @@ User = tomfoolery
 ExecStart = /bin/bash /home/tomfoolery/TOMFoolery_BeepBeep/scripts/start_backend.sh
 
 [Install]
-WantedBy = multi-user.target
+WantedBy = default.target
