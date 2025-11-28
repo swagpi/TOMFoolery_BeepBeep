@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8" />
-    <title>Map with Custom Zoom Buttons</title>
+    <title>Smart Efficiency Map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
@@ -10,91 +10,217 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        body { margin: 0; padding: 0; }
-        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
-        /* Hide routing text instructions */
+        /* --- 🎨 PALETTE (Tropical Jade) --- */
+        :root {
+            --coral: #FCA47C;
+            --sun: #F9D779;
+            --aqua: #23CED9;
+            --jade: #A1CCA6;
+            --teal: #097C87;
+            --dark-teal: #054A52;
+            --bg-gray: #f3f4f6;
+        }
+
+        /* --- FONT FACE --- */
+        @font-face {
+            font-family: 'ZTNature-Medium';
+            src: url('ZTNature-Medium.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* 🖼 FRAME SETUP (From File 2) */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-gray); /* Gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* The Card Container */
+        .map-card {
+            overflow: hidden;
+            position: relative;
+            width: min(1400px, 98vw);
+            height: min(820px, 95vh);
+            background: #ffffff;
+            border-radius: 12px; /* Rounded corners */
+            box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12); /* Drop shadow */
+            padding: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        /* Inner container for the map to fit nicely inside the card */
+        .map-inner {
+            position: relative;
+            flex: 1;
+            border-radius: 10px;
+            overflow: hidden; /* Ensures map corners are rounded */
+        }
+
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            z-index: 1; 
+        }
+        
+        /* Hide default routing container box */
         .leaflet-routing-container { display: none; }
+
+        /* --- UI OVERLAYS --- */
+        
+        /* 1. Brand Badge */
+        .brand-badge {
+            position: absolute; top: 20px; right: 26px; z-index: 9999;
+            background: var(--teal); color: white;
+            padding: 10px 22px; border-radius: 999px;
+            border: 4px solid white;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+            font-size: 17px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.1em; display: inline-flex; align-items: center; gap: 10px;
+        }
+        .brand-badge-dot { width: 14px; height: 14px; border-radius: 999px; background: var(--sun); }
+
+        /* 2. Search Toolbar (Positioned inside map-inner) */
+        .map-toolbar-container {
+            position: absolute; top: 20px; left: 20px; z-index: 9999; width: 320px;
+        }
+        .map-toolbar {
+            display: flex; gap: 8px; padding: 8px;
+            background-color: var(--jade); /* Using Jade background from File 2 */
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        #search-input {
+            flex: 1; padding: 8px 12px; border: 1px solid #ccc; background: white;
+            border-radius: 6px; font-size: 16px; outline: none;
+            font-family: 'ZTNature-Medium', sans-serif;
+        }
+        #search-btn {
+            width: 40px; height: 40px; background-color: #f0f0f0; color: #333;
+            border: 1px solid #ccc; border-radius: 15px; cursor: pointer; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* 3. Search Dropdown */
+        #search-results-dropdown {
+            margin-top: 5px; width: 100%; background: white;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            max-height: 300px; overflow-y: auto; display: none; 
+        }
+        .search-suggestion-item {
+            padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #eee;
+            font-size: 14px; color: #333; font-family: 'ZTNature-Medium', sans-serif;
+        }
+        .search-suggestion-item:last-child { border-bottom: none; }
+        .search-suggestion-item:hover { background-color: #f0f0f0; }
+
+        /* 4. Zoom & Locate Controls */
+        .custom-zoom-controls {
+            position: absolute; bottom: 30px; right: 20px; z-index: 9999; 
+            display: flex; flex-direction: column; gap: 10px; 
+        }
+        .zoom-btn {
+            width: 45px; height: 45px; background-color: white;
+            border: 2px solid #ccc; border-radius: 50%; /* Circular */
+            font-size: 24px; font-weight: bold; color: #333; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
+        #locate-btn { background-color: var(--teal); color: white; border: none; }
+        #locate-btn:hover { background-color: #1e88e5; }
 
         /* --- MARKER STYLES --- */
         .custom-bus-icon {
-            display: flex; align-items: center; justify-content: center;
             border-radius: 50%; border: 2px solid white;  
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4); font-size: 12px;          
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box;
         }
-        .bus-active {
-            background-color: #ff0000; width: 24px !important; height: 24px !important;
-            margin-left: -12px !important; margin-top: -12px !important;
-        }
-        .bus-passive {
-            background-color: #808080; opacity: 0.9;
-            width: 20px !important; height: 20px !important;
-            margin-left: -10px !important; margin-top: -10px !important;
-            font-size: 10px;          
-        }
+        .bus-active { background-color: var(--coral); }
+        .bus-passive { background-color: var(--sun); }
 
-        /* --- NEW: CUSTOM ZOOM BUTTON STYLES --- */
-        .custom-zoom-controls {
-            position: absolute;
-            bottom: 30px;  /* Distance from bottom */
-            right: 20px;   /* Distance from right */
-            z-index: 9999; /* Ensure it stays on top of the map */
-            display: flex;
-            flex-direction: column; /* Stack buttons vertically */
-            gap: 10px; /* Space between buttons */
+        /* --- POPUP STYLES --- */
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px; padding: 0;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
         }
+        .leaflet-popup-content {
+            margin: 10px 14px; font-family: 'ZTNature-Medium', sans-serif;
+            font-size: 14px; color: #333; text-align: center; font-weight: bold;
+        }
+        .leaflet-popup-tip-container { display: none; } 
+        a.leaflet-popup-close-button { display: none; } 
 
-        .zoom-btn {
-            width: 50px;
-            height: 50px;
-            background-color: white;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            font-size: 24px;
-            font-weight: bold;
-            color: #333;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-
-        .zoom-btn:active {
-            background-color: #f0f0f0;
-            transform: scale(0.95);
-        }
     </style>
 </head>
 <body>
-    
-    <div id="map"></div>
 
-    <div class="custom-zoom-controls">
-        <button class="zoom-btn" onclick="map.zoomIn()">+</button>
-        <button class="zoom-btn" onclick="map.zoomOut()">-</button>
+    <div class="map-card">
+        
+        <div class="brand-badge">
+            <span class="brand-badge-dot"></span>
+            <span>beep beep</span>
+        </div>
+
+        <div class="map-inner">
+            
+            <div class="map-toolbar-container">
+                <div class="map-toolbar">
+                    <input type="text" id="search-input" placeholder="Search for a stop or address..." />
+                    <button id="search-btn" title="Search">🔍</button>
+                </div>
+                <div id="search-results-dropdown"></div>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="custom-zoom-controls">
+                <button id="locate-btn" class="zoom-btn" title="Locate Me">📍</button>
+                <button class="zoom-btn" onclick="map.zoomIn()">+</button>
+                <button class="zoom-btn" onclick="map.zoomOut()">-</button>
+            </div>
+        </div>
     </div>
+
     <script>
+        // --- CONFIGURATION ---
+        const SNAP_RADIUS_METERS = 50; 
+        const ABSOLUTE_MIN_WALK = 200; 
+
         // --- 1. ICONS ---
-        var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '🚌', iconSize: [24, 24] });
-        var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '🚌', iconSize: [20, 20] });
+        var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
+        var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
+        
+        // SVG Destination Icon (Perfect Pin)
+        var iconDestination = L.divIcon({ 
+            className: '', 
+            html: `
+            <svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));">
+                <path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#097C87" stroke="white" stroke-width="2"/>
+                <circle cx="15" cy="15" r="4" fill="white"/>
+            </svg>
+            `, 
+            iconSize: [36, 48], 
+            iconAnchor: [18, 48], 
+            popupAnchor: [0, -50]
+        });
 
         function createUserMarker(latlng) {
-            return L.circleMarker(latlng, {
-                radius: 8, fillColor: "#2196F3", color: "#FFF", weight: 2, fillOpacity: 1
-            });
+            return L.circleMarker(latlng, { radius: 9, fillColor: "#2196F3", color: "#FFF", weight: 3, fillOpacity: 1 });
         }
 
         // --- 2. MAP SETUP ---
-        var map = L.map('map', {
-            dragging: true, 
-            tap: true, 
-            zoomControl: false // Disable default Leaflet zoom control
-        }).setView([0,0], 1);
-
-        L.tileLayer('https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=Kd8toTEa81uyT4MJIWKx',{
-            attribution: '&copy; MapTiler &copy; OpenStreetMap',
-            noWrap: true
+        var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([0,0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ 
+            attribution: '&copy; OpenStreetMap contributors', noWrap: true 
         }).addTo(map);
 
         var userLatLng = null;
@@ -102,6 +228,9 @@
         var routeControls = []; 
         var destinationMarker = null;
         var userMarker = null;
+        
+        // Search Groups
+        var searchStopMarkers = L.layerGroup().addTo(map);
 
         // --- 3. GET LOCATION ---
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
@@ -109,35 +238,65 @@
         function success(position) {
             userLatLng = L.latLng(position.coords.latitude, position.coords.longitude); 
             map.setView(userLatLng, 15);
+            
+            if(userMarker) map.removeLayer(userMarker);
             userMarker = createUserMarker(userLatLng).addTo(map).bindPopup("<b>You</b>");
             
-            generateStaticMockStops(userLatLng);
+            // Only generate mock stops if we haven't already
+            if(allStopsData.length === 0) generateStaticMockStops(userLatLng);
+            
             logBoundsForBackend();
         }
 
-        function error() { alert("Location could not be retrieved."); }
+        function error() { 
+            console.log("Location denied. Defaulting to center."); 
+            var defaultLoc = L.latLng(51.505, -0.09);
+            map.setView(defaultLoc, 13);
+            generateStaticMockStops(defaultLoc);
+        }
 
-        // --- 4. BACKEND LOGIC ---
+        // --- 4. BACKEND & DATA ---
         map.on('moveend', function() { logBoundsForBackend(); });
 
         function logBoundsForBackend() {
             var bounds = map.getBounds();
-            var requestData = {
-                topLeft: bounds.getNorthWest(),
-                bottomRight: bounds.getSouthEast()
-            };
-            console.log("📡 Sending Bounds to Backend:", requestData);
+            console.log("📡 Viewport changed. Bounds:", bounds.toBBoxString());
         }
 
-        // --- 5. STATIC MOCK DATA ---
         function generateStaticMockStops(center) {
+            let mockStopsPayload = [];
             for (let i = 0; i < 30; i++) { 
                 let latOffset = (Math.random() - 0.5) * 0.04;
                 let lngOffset = (Math.random() - 0.5) * 0.04;
-                let stopPos = L.latLng(center.lat + latOffset, center.lng + lngOffset);
-                let marker = L.marker(stopPos, {icon: iconBusGray}).addTo(map);
-                allStopsData.push({ id: i, latLng: stopPos, marker: marker });
+                mockStopsPayload.push({
+                    "stop_id": "stop_" + (i + 1000), 
+                    "stop_name": "Station " + (i + 1),
+                    "latitude": center.lat + latOffset,
+                    "longitude": center.lng + lngOffset
+                });
             }
+            updateMapWithBackendData(mockStopsPayload);
+        }
+
+        function updateMapWithBackendData(stopsList) {
+            stopsList.forEach(stopData => {
+                let stopPos = L.latLng(stopData.latitude, stopData.longitude);
+                let marker = L.marker(stopPos, {icon: iconBusGray}).addTo(map);
+                
+                marker.bindPopup(stopData.stop_name, { offset: [0, -10], autoPan: true });
+
+                marker.on('click', function(e) { 
+                    L.DomEvent.stopPropagation(e); 
+                    processJourney(e.latlng, true, stopData.stop_id); 
+                });
+                
+                allStopsData.push({ 
+                    stop_id: stopData.stop_id, 
+                    stop_name: stopData.stop_name, 
+                    latLng: stopPos, 
+                    marker: marker 
+                });
+            });
         }
 
         function findNearestStop(targetLatLng) {
@@ -147,86 +306,181 @@
                 let dist = targetLatLng.distanceTo(stop.latLng);
                 if (dist < minDist) { minDist = dist; nearest = stop; }
             });
-            return nearest;
+            return { stop: nearest, distance: minDist };
         }
 
+        // --- 5. CLEANUP FUNCTIONS ---
         function clearRoutes() {
+            map.closePopup(); 
             routeControls.forEach(rc => map.removeControl(rc));
             routeControls = [];
             if (destinationMarker) map.removeLayer(destinationMarker);
-            allStopsData.forEach(stop => {
-                stop.marker.setIcon(iconBusGray);
+            
+            // Reset icons
+            allStopsData.forEach(stop => { 
+                stop.marker.setIcon(iconBusGray); 
                 stop.marker.setZIndexOffset(0); 
             });
         }
+        
+        function clearSearchResults() {
+            searchStopMarkers.clearLayers();
+            document.getElementById('search-results-dropdown').style.display = 'none';
+        }
 
-        // --- 6. CLICK & LOGIC ---
+        // --- 6. ROUTING LOGIC (The Smart Core) ---
         map.on('click', function(e) {
+            var clickedLoc = e.latlng;
+            var finalDestination = clickedLoc;
+            var snapped = false;
+            var snappedId = null;
+
+            // Snap logic
+            var result = findNearestStop(clickedLoc);
+            if (result.stop && result.distance < SNAP_RADIUS_METERS) {
+                finalDestination = result.stop.latLng;
+                snapped = true;
+                snappedId = result.stop.stop_id;
+            }
+            processJourney(finalDestination, snapped, snappedId);
+        });
+
+        function processJourney(destLatLng, isBusStop, stopId) {
             if (!userLatLng || allStopsData.length === 0) return;
 
             clearRoutes(); 
-
-            var destLatLng = e.latlng;
-            destinationMarker = L.marker(destLatLng).addTo(map).bindPopup("<b>Destination</b>").openPopup();
+            clearSearchResults(); // Clear search pins if clicking map
 
             var distDirect = userLatLng.distanceTo(destLatLng);
+            var startData = findNearestStop(userLatLng);
+            var endData = (isBusStop && stopId) 
+                ? { stop: allStopsData.find(s => s.stop_id === stopId) }
+                : findNearestStop(destLatLng);
+                
+            var startStop = startData.stop;
+            var endStop = endData.stop;
             
-            var startStop = findNearestStop(userLatLng);
-            var endStop = findNearestStop(destLatLng);
-            
-            if (!startStop) return;
+            if (!startStop || !endStop) return;
 
-            var distToFirstStop = userLatLng.distanceTo(startStop.latLng);
-
-            // Decision: Walk or Bus?
-            if (distDirect < distToFirstStop || distDirect < 800) {
-                // Direct Walk
-                createRoute(userLatLng, destLatLng, 
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 
-                    'walking');
+            if (isBusStop) {
+                endStop.marker.openPopup();
             } else {
-                // Bus Trip
+                destinationMarker = L.marker(destLatLng, {icon: iconDestination}).addTo(map);
+                destinationMarker.bindPopup("Destination", { offset: [0, -45] }).openPopup();
+            }
+
+            // === SMART ALGORITHM ===
+            var distToStart = userLatLng.distanceTo(startStop.latLng);
+            var distFromEnd = endStop.latLng.distanceTo(destLatLng);
+            var totalBusOverheadWalk = distToStart + distFromEnd;
+
+            var useBus = true;
+            if (startStop.stop_id === endStop.stop_id) { useBus = false; }
+            else if (distDirect < ABSOLUTE_MIN_WALK) { useBus = false; }
+            else if (distDirect < totalBusOverheadWalk) { useBus = false; } // If walking to bus stops takes longer than walking direct
+
+            // Styles using Palette Variables
+            // Jade/Green for Walking
+            var walkStyles = [ 
+                { color: '#6E8F72', opacity: 1, weight: 7 }, 
+                { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10' } 
+            ];
+            // Teal for Bus
+            var busStyles = [ 
+                { color: '#054A52', opacity: 0.8, weight: 8 }, 
+                { color: '#23CED9', opacity: 1, weight: 4 } 
+            ];
+
+            if (!useBus) {
+                console.log("Decision: Walk Only");
+                createRoute(userLatLng, destLatLng, walkStyles, 'walking');
+            } else {
+                console.log("Decision: Take Bus");
                 startStop.marker.setIcon(iconBusRed);
-                startStop.marker.setZIndexOffset(1000); 
+                startStop.marker.setZIndexOffset(1000);
                 endStop.marker.setIcon(iconBusRed);
                 endStop.marker.setZIndexOffset(1000);
 
-                // 1. Walk
-                createRoute(userLatLng, startStop.latLng, 
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
-
-                // 2. Bus
-                if (startStop.id !== endStop.id) {
-                    createRoute(startStop.latLng, endStop.latLng, 
-                        [{color: 'green', opacity: 0.8, weight: 7}], 'driving');
+                createRoute(userLatLng, startStop.latLng, walkStyles, 'walking');
+                createRoute(startStop.latLng, endStop.latLng, busStyles, 'driving'); // Using driving profile to simulate bus speed
+                
+                if (!isBusStop) {
+                    createRoute(endStop.latLng, destLatLng, walkStyles, 'walking');
                 }
-
-                // 3. Walk
-                createRoute(endStop.latLng, destLatLng, 
-                    [{color: 'purple', opacity: 0.8, weight: 5, dashArray: '5, 10', lineCap: 'round'}], 'walking');
             }
             
-             var bounds = L.latLngBounds([userLatLng, destLatLng]);
-             map.fitBounds(bounds, {padding: [50, 50]});
-        });
+            var bounds = L.latLngBounds([userLatLng, destLatLng]);
+            map.fitBounds(bounds, {padding: [80, 80]}); 
+        }
 
         function createRoute(start, end, styleStyles, mode) {
             var control = L.Routing.control({
                 waypoints: [start, end],
-                router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1',
-                    profile: mode 
-                }),
-                routeWhileDragging: false,
-                addWaypoints: false,
-                draggableWaypoints: false,
-                fitSelectedRoutes: false, 
-                show: false, 
-                createMarker: function() { return null; }, 
-                lineOptions: { styles: styleStyles }
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1', profile: mode }),
+                routeWhileDragging: false, addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: false, 
+                show: false, createMarker: function() { return null; }, 
+                lineOptions: { styles: styleStyles } 
             }).addTo(map);
             routeControls.push(control);
         }
+
+        // --- 7. SEARCH FEATURE (Simulated) ---
+        const searchInput = document.getElementById('search-input');
+        const searchDropdown = document.getElementById('search-results-dropdown');
+
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.trim().toLowerCase();
+            searchDropdown.innerHTML = '';
+            
+            if (query.length > 2) {
+                // Mock filtering of current visible stops
+                const matches = allStopsData.filter(s => s.stop_name.toLowerCase().includes(query));
+                
+                // Mock "API" results
+                if(matches.length === 0) {
+                     matches.push({ stop_name: "Mock External Result 1", latLng: L.latLng(userLatLng.lat + 0.01, userLatLng.lng + 0.01), isExternal: true });
+                }
+
+                if (matches.length > 0) {
+                    searchDropdown.style.display = 'block';
+                    matches.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'search-suggestion-item';
+                        div.textContent = item.stop_name;
+                        div.onclick = () => {
+                            selectSearchResult(item);
+                        };
+                        searchDropdown.appendChild(div);
+                    });
+                } else {
+                    searchDropdown.style.display = 'none';
+                }
+            } else {
+                searchDropdown.style.display = 'none';
+            }
+        });
+
+        function selectSearchResult(item) {
+            searchInput.value = item.stop_name;
+            searchDropdown.style.display = 'none';
+            
+            if(item.isExternal) {
+                 let m = L.marker(item.latLng, {icon: iconDestination}).addTo(searchStopMarkers);
+                 m.bindPopup("<b>" + item.stop_name + "</b>").openPopup();
+                 map.setView(item.latLng, 16);
+                 processJourney(item.latLng, false, null);
+            } else {
+                map.setView(item.latLng, 16);
+                item.marker.openPopup();
+                processJourney(item.latLng, true, item.stop_id);
+            }
+        }
+
+        // --- 8. LOCATE ME BTN ---
+        document.getElementById('locate-btn').addEventListener('click', function() {
+            navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
+        });
+
     </script>
 </body>
 </html>
