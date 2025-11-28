@@ -26,10 +26,8 @@ if ! [[ -d $USER_SERVICE_DIR ]]; then
 fi
 
 for SERVICE in $SERVICES; do
-    if ! [[ -f "$USER_SERVICE_DIR/$(basename $SERVICE)" ]]; then
-        echo "copying service $SERVICE"
-        cp -f "$SERVICE" "$USER_SERVICE_DIR/$(basename $SERVICE)"
-    fi
+    echo "copying service $SERVICE"
+    cp -f "$SERVICE" "$USER_SERVICE_DIR/$(basename $SERVICE)"
 done
 
 sudo loginctl enable-linger $USER
