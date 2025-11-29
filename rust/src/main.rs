@@ -9,10 +9,9 @@ const CALENDAR: &str = "data/calendar.txt";
 const TRIPS: &str = "data/trips.txt";
 const STOP_TIMES: &str = "data/stop_times.txt";
 const STOPS: &str = "data/stops.txt";
+const ROUTES: &str = "data/routes.txt";
 
-// -------------------------
 // Data structures
-// -------------------------
 #[derive(Debug, Deserialize)]
 struct Service {
     #[serde(rename = "monday")]
@@ -60,23 +59,31 @@ struct Stop {
     location_type: Option<i32>,
 }
 
-// -------------------------
+#[derive(Deserialize, Debug)]
+struct Route {
+    route_short_name: String,
+    route_type: i32,
+    route_id: i32,
+}
+
 // Table creation
-// -------------------------
 fn create_tables(db: &Connection) {
     db.execute(
         "CREATE TABLE IF NOT EXISTS service(
             mon int, tue int, wed int, thur int, fri int,
             sat int, sun int, start_date int, end_date int, service_id int
-        )", ()
-    ).unwrap();
+        )",
+        (),
+    )
+    .unwrap();
 
     db.execute(
         "CREATE TABLE IF NOT EXISTS trip(
             route_id int, service_id int, trip_id int
         )",
         (),
-    ).unwrap();
+    )
+    .unwrap();
 
     db.execute(
         "CREATE TABLE IF NOT EXISTS stoptime(
@@ -85,8 +92,10 @@ fn create_tables(db: &Connection) {
             departure_time text,
             stop_id int,
             stop_sequence int
-        )", ()
-    ).unwrap();
+        )",
+        (),
+    )
+    .unwrap();
 
     db.execute(
         "CREATE TABLE IF NOT EXISTS stops(
@@ -95,17 +104,18 @@ fn create_tables(db: &Connection) {
             latitude real,
             stop_id int,
             location_type int
-        )", ()
-    ).unwrap();
+        )",
+        (),
+    )
+    .unwrap();
+
+    db.execute("CREATE TABLE IF NOT EXISTS routes(route_short_name text, route_type int, route_id int)", ()).unwrap();
 }
 
-// -------------------------
 // Loaders
-// -------------------------
 fn load_service(tx: &Transaction) -> Result<(), Box<dyn Error>> {
-    let mut stmt = tx.prepare(
-        "INSERT INTO service VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)"
-    )?;
+    let mut stmt =
+        tx.prepare("INSERT INTO service VALUES(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)")?;
 
     let file = fs::File::open(CALENDAR)?;
     let mut reader = Reader::from_reader(file);
@@ -113,8 +123,16 @@ fn load_service(tx: &Transaction) -> Result<(), Box<dyn Error>> {
     for result in reader.deserialize() {
         let s: Service = result?;
         stmt.execute((
-            s.mon, s.tue, s.wed, s.thu, s.fri, s.sat, s.sun,
-            s.start_date, s.end_date, s.service_id,
+            s.mon,
+            s.tue,
+            s.wed,
+            s.thu,
+            s.fri,
+            s.sat,
+            s.sun,
+            s.start_date,
+            s.end_date,
+            s.service_id,
         ))?;
     }
     Ok(())
@@ -133,9 +151,7 @@ fn load_trips(tx: &Transaction) -> Result<(), Box<dyn Error>> {
 }
 
 fn load_stoptimes(tx: &Transaction) -> Result<(), Box<dyn Error>> {
-    let mut stmt = tx.prepare(
-        "INSERT INTO stoptime VALUES(?1, ?2, ?3, ?4, ?5)"
-    )?;
+    let mut stmt = tx.prepare("INSERT INTO stoptime VALUES(?1, ?2, ?3, ?4, ?5)")?;
 
     let file = fs::File::open(STOP_TIMES)?;
     let mut reader = Reader::from_reader(file);
@@ -156,7 +172,7 @@ fn load_stoptimes(tx: &Transaction) -> Result<(), Box<dyn Error>> {
 fn load_stops(tx: &Transaction) -> Result<(), Box<dyn Error>> {
     let mut stmt = tx.prepare(
         "INSERT INTO stops(stop_name, longitude, latitude, stop_id, location_type)
-         VALUES (?1, ?2, ?3, ?4, ?5)"
+         VALUES (?1, ?2, ?3, ?4, ?5)",
     )?;
 
     let file = fs::File::open(STOPS)?;
@@ -175,9 +191,27 @@ fn load_stops(tx: &Transaction) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-// -------------------------
+fn load_routes(tx: &Transaction) -> Result<(), Box<dyn Error>> {
+    let mut stmt = tx.prepare(
+        "INSERT INTO routes(route_short_name, route_type, route_id)
+         VALUES (?1, ?2, ?3)",
+    )?;
+
+    let file = fs::File::open(ROUTES)?;
+    let mut reader = Reader::from_reader(file);
+
+    for result in reader.deserialize() {
+        let s: Route = result?;
+        stmt.execute((
+            s.route_short_name,
+            s.route_type,
+            s.route_id,
+        ))?;
+    }
+    Ok(())
+}
+
 // Main
-// -------------------------
 fn main() {
     const DB_FILE: &str = "/database.db";
     let mut base_path = std::env::var("DB_DIR").unwrap().to_string();
@@ -188,6 +222,7 @@ fn main() {
     create_tables(&db);
 
     let tx = db.transaction().unwrap();
+    load_routes(&tx).unwrap();
     load_service(&tx).unwrap();
     load_trips(&tx).unwrap();
     load_stoptimes(&tx).unwrap();

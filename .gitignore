@@ -1,4 +1,5 @@
 .venv
 /backend/__pycache__
 /rust/target
-
+/rust/data
+database.db
