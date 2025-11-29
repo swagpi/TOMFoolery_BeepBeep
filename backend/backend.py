@@ -1,9 +1,11 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uvicorn
 import sys
+from pprint import  pprint
 
 # Helper modules (imported from existing files)
 from map_data import handle_map_update_request, initialize_db
@@ -26,7 +28,17 @@ app.add_middleware(
 )
 
 # Database path
-DB_PATH = "tomfoolery-rs-main/database.db" # Path to the DB created by Rust
+
+DB_FILE_NAME = "/database.db"
+
+def getDBPath() -> str:
+    db_env: Optional[str] = os.getenv("DB_DIR")
+    if db_env is None:
+        return "tomfoolery-rs-main/database.db"
+    else:
+        return db_env + DB_FILE_NAME
+
+DB_PATH = getDBPath() # Path to the DB created by Rust
 # Attempt to initialize DB if it doesn't exist
 try:
     initialize_db(DB_PATH)
@@ -92,6 +104,7 @@ def routes_for_stop_api(stop_id: str):
     print(f"🛣️ Route Request for stop_id={stop_id}")
     try:
         data = get_routes_for_stop(stop_id)
+        pprint(data[:100])
         return data
     except Exception as e:
         print(f"❌ Error in /routes_for_stop: {e}")

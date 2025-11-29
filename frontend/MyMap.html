@@ -55,16 +55,13 @@
 
         /* Controls */
         .map-toolbar-container { position: absolute; top: 20px; left: 20px; z-index: 9999; width: 340px; }
-        
         .map-toolbar {
             display: flex; gap: 8px; padding: 8px;
-            background-color: #027361; 
-            border-radius: 8px;
+            background-color: #027361; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        
         #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; }
+        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; background-color: #f2be4b; }
 
         #search-results-dropdown {
             margin-top: 5px; width: 100%; background: white;
@@ -101,7 +98,6 @@
         .sidebar-header { background: var(--teal); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--sun); }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; }
         
-        /* TRIP CARD UPDATED STYLE */
         .trip-card { 
             background: white; border-left: 5px solid var(--coral); border-radius: 6px; 
             padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
@@ -110,28 +106,22 @@
         }
         .trip-card:hover { background-color: #e0f7fa; border-left-color: var(--teal); }
 
-        .trip-info { display: flex; flex-direction: column; gap: 4px; }
-        
-        /* Route name (e.g., 12A) bigger */
-        .trip-route { font-weight: 800; color: var(--dark-teal); font-size: 18px; }
-        
-        /* Destination (Last Stop) smaller */
-        .trip-dest { 
-            font-size: 13px; color: #555; font-weight: 500; 
-            display: flex; align-items: center; gap: 4px;
-        }
-        .trip-dest::before { content: '➔'; font-size: 10px; color: #888; }
-
-        .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; font-size: 16px; }
+        .trip-route { font-weight: bold; color: var(--dark-teal); font-size: 16px; }
+        .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
         .no-data { text-align: center; color: #999; margin-top: 20px; }
 
         /* Custom Styles */
         .custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
-        .bus-route-stop-yellow { background-color: var(--sun); border: 2px solid #fff; z-index: 1000 !important; }
         
-        /* Live Bus Icon */
+        .bus-route-stop-yellow { 
+            background-color: var(--sun); 
+            border: 2px solid #fff; 
+            z-index: 1000 !important; 
+        }
+
+        /* LIVE BUS ICON STYLE */
         .bus-live {
             background-color: var(--purple);
             border: 2px solid white;
@@ -151,8 +141,8 @@
         .leaflet-popup-content { margin: 10px 14px; font-size: 14px; color: #333; text-align: center; font-weight: bold; }
         .leaflet-popup-tip-container { display: none; } 
         a.leaflet-popup-close-button { display: none; } 
-        
-        /* HIDE LOGIC */
+
+        /* --- HIDE LOGIC --- */
         .hide-routes .destination-pin { display: none !important; }
         .hide-routes .leaflet-routePane-pane { display: none !important; }
         .hide-routes .bus-live { display: none !important; }
@@ -202,23 +192,13 @@
         // --- STATE ---
         let isPathfindingActive = true; 
         let activeTripPolyline = null; 
-        
-        // --- LIVE TRACKING STATE ---
-        let liveTrackingInterval = null;
-        let liveBusLayerGroup = null;
 
         // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
+        var iconLiveBus = L.divIcon({ className: 'custom-bus-icon bus-live', html: '🚌', iconSize: [26, 26], iconAnchor: [13, 13] });
         
-        var iconLiveBus = L.divIcon({ 
-            className: 'custom-bus-icon bus-live', 
-            html: '🚌', 
-            iconSize: [26, 26], 
-            iconAnchor: [13, 13] 
-        });
-
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
             html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, 
@@ -278,28 +258,17 @@
                     data.next_trips.sort((a, b) => parseInt(a.estimated_arrival||a.arrival_time) - parseInt(b.estimated_arrival||b.arrival_time));
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
-                        
-                        // --- USE THE NEW FIELDS HERE ---
-                        const routeName = trip.display_route_name || trip.route_id;
-                        const headsign = trip.display_headsign || trip.trip_id;
-
                         const item = document.createElement('div'); item.className = 'trip-card';
+                        // Click event to visualize trip route
                         item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
-                        
-                        item.innerHTML = `
-                            <div class="trip-info">
-                                <span class="trip-route">${routeName}</span>
-                                <span class="trip-dest">${headsign}</span>
-                            </div>
-                            <div class="trip-time">${formatTime(timeStr)}</div>
-                        `;
+                        item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
                         listEl.appendChild(item);
                     });
                 } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
-        // --- VISUALIZE TRIP & START LIVE TRACKING ---
+        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
 
@@ -316,7 +285,7 @@
 
                 clearRoutes(); 
                 stopsLayerGroup.clearLayers(); 
-                liveBusLayerGroup.clearLayers(); 
+                liveBusLayerGroup.clearLayers();
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
 
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
@@ -338,7 +307,7 @@
                     stopsLayerGroup.addLayer(marker);
                 });
 
-                // Draw live buses from 'last_known_stop' if available
+                // LIVE BUSES
                 tripsData.forEach(t => {
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
@@ -389,7 +358,6 @@
                     openStopSidebar(stopData.stop_id, stopData.stop_name);
                     
                     if (isPathfindingActive) {
-                        // If we are in "Trip View", clicking another stop should reset and calculate route
                         if (activeTripPolyline) {
                              if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
                              liveBusLayerGroup.clearLayers(); 
