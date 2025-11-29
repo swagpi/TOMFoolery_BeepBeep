@@ -14,7 +14,8 @@
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
-            --bg-gray: #f3f4f6; --purple: #9B59B6;
+            --purple: #9B59B6; /* Live Bus Color */
+            --bg-gray: #f3f4f6;
         }
 
         @font-face {
@@ -45,7 +46,7 @@
         .map-disabled { cursor: not-allowed !important; }
         .leaflet-routing-container { display: none; }
 
-        /* Logo */
+        /* --- NEW LOGO STYLE --- */
         .brand-logo {
             position: absolute; top: 20px; right: 26px; z-index: 9999;
             width: 180px; height: auto;
@@ -82,6 +83,7 @@
             display: flex; align-items: center; justify-content: center;
         }
         .zoom-btn:active { background-color: #f0f0f0; transform: scale(0.95); }
+        
         #toggle-label-btn.disabled-mode { background-color: #ffdddd; color: #c0392b; border-color: #e74c3c; }
 
         /* Sidebar */
@@ -96,7 +98,6 @@
         .sidebar-header { background: var(--teal); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--sun); }
         .sidebar-content { flex: 1; overflow-y: auto; padding: 10px; background: #f9f9f9; }
         
-        /* TRIP CARD STYLES */
         .trip-card { 
             background: white; border-left: 5px solid var(--coral); border-radius: 6px; 
             padding: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
@@ -105,36 +106,43 @@
         }
         .trip-card:hover { background-color: #e0f7fa; border-left-color: var(--teal); }
 
-        .trip-info { display: flex; flex-direction: column; gap: 4px; }
-        
-        /* UPDATED: Route Name is larger */
-        .trip-route { font-weight: 800; color: var(--dark-teal); font-size: 18px; }
-        
-        /* UPDATED: Destination/Headsign style */
-        .trip-dest { 
-            font-size: 13px; color: #555; font-weight: 500;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .trip-dest::before { content: '➔'; font-size: 10px; color: #888; }
-
+        .trip-route { font-weight: bold; color: var(--dark-teal); font-size: 16px; }
         .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
         .no-data { text-align: center; color: #999; margin-top: 20px; }
 
-        /* Icons */
+        /* Custom Styles */
         .custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
-        .bus-route-stop-yellow { background-color: var(--sun); border: 2px solid #fff; z-index: 1000 !important; }
-        .bus-live { background-color: var(--purple); border: 2px solid white; box-shadow: 0 0 8px var(--purple); z-index: 2000 !important; display: flex; justify-content: center; align-items: center; color: white; font-size: 12px; }
+        
+        .bus-route-stop-yellow { 
+            background-color: var(--sun); 
+            border: 2px solid #fff; 
+            z-index: 1000 !important; 
+        }
 
-        .stop-name-label { background-color: transparent; border: none; box-shadow: none; font-size: 11px; font-weight: bold; color: #333; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff; }
+        /* LIVE BUS ICON STYLE */
+        .bus-live {
+            background-color: var(--purple);
+            border: 2px solid white;
+            box-shadow: 0 0 8px var(--purple);
+            z-index: 2000 !important;
+            display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 12px;
+        }
+
+        .stop-name-label {
+            background-color: transparent; border: none; box-shadow: none;
+            font-size: 11px; font-weight: bold; color: #333;
+            text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
+        }
 
         .leaflet-popup-content-wrapper { border-radius: 12px; padding: 0; box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
         .leaflet-popup-content { margin: 10px 14px; font-size: 14px; color: #333; text-align: center; font-weight: bold; }
         .leaflet-popup-tip-container { display: none; } 
         a.leaflet-popup-close-button { display: none; } 
-        
-        /* Hide logic */
+
+        /* --- HIDE LOGIC --- */
         .hide-routes .destination-pin { display: none !important; }
         .hide-routes .leaflet-routePane-pane { display: none !important; }
         .hide-routes .bus-live { display: none !important; }
@@ -146,6 +154,7 @@
     <div class="map-card">
         <img src="logo.png" alt="Beep Beep Logo" class="brand-logo">
         <div class="map-inner" id="map-wrapper">
+            
             <div class="map-toolbar-container">
                 <div class="map-toolbar">
                     <input type="text" id="search-input" placeholder="Search stop or address..." />
@@ -180,21 +189,29 @@
         const SNAP_RADIUS_METERS = 150; 
         const ABSOLUTE_MIN_WALK = 200; 
 
+        // --- STATE ---
         let isPathfindingActive = true; 
         let activeTripPolyline = null; 
-        let liveTrackingInterval = null;
 
+        // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
         var iconLiveBus = L.divIcon({ className: 'custom-bus-icon bus-live', html: '🚌', iconSize: [26, 26], iconAnchor: [13, 13] });
-        var iconDestination = L.divIcon({ className: 'destination-pin', html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, iconSize: [36, 48], iconAnchor: [18, 48], popupAnchor: [0, -20] });
+        
+        var iconDestination = L.divIcon({ 
+            className: 'destination-pin', 
+            html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, 
+            iconSize: [36, 48], iconAnchor: [18, 48], popupAnchor: [0, -20] 
+        });
 
         function createUserMarker(latlng) { return L.circleMarker(latlng, { radius: 9, fillColor: "#2196F3", color: "#FFF", weight: 3, fillOpacity: 1 }); }
 
+        // --- MAP SETUP ---
         var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ attribution: '&copy; OpenStreetMap', noWrap: true }).addTo(map);
 
+        // Custom Pane for Routes
         map.createPane('routePane');
         map.getPane('routePane').style.zIndex = 399;
 
@@ -221,7 +238,10 @@
             fetchMapDataFromBackend();
         }
         
-        function closeSidebar() { document.getElementById('info-sidebar').classList.remove('open'); }
+        function closeSidebar() { 
+            document.getElementById('info-sidebar').classList.remove('open'); 
+        }
+        
         function formatTime(t) { if(!t || t.length<4) return t; return t.substring(0,2)+":"+t.substring(2,4); }
 
         async function openStopSidebar(stopId, stopName) {
@@ -238,36 +258,30 @@
                     data.next_trips.sort((a, b) => parseInt(a.estimated_arrival||a.arrival_time) - parseInt(b.estimated_arrival||b.arrival_time));
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
-                        
-                        // --- USE NEW FIELDS HERE ---
-                        const routeName = trip.display_route_name || trip.route_id;
-                        const headsign = trip.display_headsign || trip.trip_id;
-
                         const item = document.createElement('div'); item.className = 'trip-card';
+                        // Click event to visualize trip route
                         item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
-                        
-                        // UPDATED HTML for CARD
-                        item.innerHTML = `
-                            <div class="trip-info">
-                                <span class="trip-route">${routeName}</span>
-                                <span class="trip-dest">${headsign}</span>
-                            </div>
-                            <div class="trip-time">${formatTime(timeStr)}</div>
-                        `;
+                        item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
                         listEl.appendChild(item);
                     });
                 } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
+        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
+
             try {
                 const response = await fetch(`${BACKEND_URL}/routes_for_stop?stop_id=${stopId}`);
                 const tripsData = await response.json();
+                
                 const targetTrip = tripsData.find(t => t.trip_id == tripId);
                 
-                if (!targetTrip || !targetTrip.full_route_stops) { alert("Route path not found for this trip."); return; }
+                if (!targetTrip || !targetTrip.full_route_stops) {
+                    alert("Route path not found for this trip.");
+                    return;
+                }
 
                 clearRoutes(); 
                 stopsLayerGroup.clearLayers(); 
@@ -276,9 +290,16 @@
 
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
                 
-                activeTripPolyline = L.polyline(pathCoordinates, { color: 'var(--jade)', weight: 6, opacity: 0.9, pane: 'routePane' }).addTo(map);
+                activeTripPolyline = L.polyline(pathCoordinates, {
+                    color: 'var(--jade)', 
+                    weight: 6,
+                    opacity: 0.9,
+                    pane: 'routePane' 
+                }).addTo(map);
+
                 map.fitBounds(activeTripPolyline.getBounds(), {padding: [50, 50]});
 
+                // Draw Stops
                 targetTrip.full_route_stops.forEach(stop => {
                     let marker = L.marker([stop.lat, stop.lon], {icon: iconBusYellow});
                     marker.bindTooltip(stop.name, { permanent: true, direction: 'top', className: 'stop-name-label', offset: [0, -10] });
@@ -286,6 +307,7 @@
                     stopsLayerGroup.addLayer(marker);
                 });
 
+                // LIVE BUSES
                 tripsData.forEach(t => {
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
@@ -296,16 +318,27 @@
                         }
                     }
                 });
-            } catch(e) { console.error("Error visualising trip:", e); }
+
+            } catch(e) {
+                console.error("Error visualising trip:", e);
+            }
         }
 
-        map.on('moveend', function() { if (!activeTripPolyline) fetchMapDataFromBackend(); });
+        map.on('moveend', function() { 
+            if (!activeTripPolyline) {
+                fetchMapDataFromBackend(); 
+            }
+        });
 
         async function fetchMapDataFromBackend() {
             if(USE_MOCK_DATA || !isPathfindingActive) return;
             if (activeTripPolyline) return; 
+
             const bounds = map.getBounds();
-            const requestBody = { north: bounds.getNorth(), south: bounds.getSouth(), east: bounds.getEast(), west: bounds.getWest(), buffer_meters: 200, max_stops: 200 };
+            const requestBody = {
+                north: bounds.getNorth(), south: bounds.getSouth(), east: bounds.getEast(), west: bounds.getWest(),
+                buffer_meters: 200, max_stops: 200
+            };
             try {
                 const response = await fetch(`${BACKEND_URL}/map_data`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
                 const data = await response.json();
@@ -319,14 +352,23 @@
                 let stopPos = L.latLng(stopData.latitude, stopData.longitude);
                 let marker = L.marker(stopPos, {icon: iconBusGray});
                 marker.bindPopup(stopData.stop_name, { offset: [0, -10], autoPan: true });
+                
                 marker.on('click', function(e) { 
                     L.DomEvent.stopPropagation(e); 
                     openStopSidebar(stopData.stop_id, stopData.stop_name);
+                    
                     if (isPathfindingActive) {
-                        if (activeTripPolyline) { if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; } liveBusLayerGroup.clearLayers(); fetchMapDataFromBackend(); }
+                        if (activeTripPolyline) {
+                             if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                             liveBusLayerGroup.clearLayers(); 
+                             fetchMapDataFromBackend(); 
+                        }
                         processJourney(e.latlng, true, stopData.stop_id); 
-                    } else { clearRoutes(); }
+                    } else {
+                        clearRoutes();
+                    }
                 });
+                
                 stopsLayerGroup.addLayer(marker);
                 allStopsData.push({ stop_id: stopData.stop_id, stop_name: stopData.stop_name, latLng: stopPos, marker: marker });
             });
@@ -342,21 +384,37 @@
             map.closePopup(); 
             routeControls.forEach(rc => map.removeControl(rc)); routeControls = [];
             if (destinationMarker) map.removeLayer(destinationMarker);
+            
             if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
             liveBusLayerGroup.clearLayers(); 
+            
             allStopsData.forEach(stop => { stop.marker.setIcon(iconBusGray); stop.marker.setZIndexOffset(0); });
         }
 
+        // --- MAP CLICK HANDLER ---
         map.on('click', function(e) {
             document.getElementById('search-results-dropdown').style.display = 'none';
-            if (activeTripPolyline) { if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; } liveBusLayerGroup.clearLayers(); fetchMapDataFromBackend(); closeSidebar(); return; }
+            
+            if (activeTripPolyline) {
+                if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
+                liveBusLayerGroup.clearLayers();
+                fetchMapDataFromBackend();
+                closeSidebar();
+                return;
+            }
+
             if (!isPathfindingActive) return; 
+
             var result = findNearestStop(e.latlng);
             var isSnapped = (result.stop && result.distance < SNAP_RADIUS_METERS);
+
             if (isSnapped) {
                 openStopSidebar(result.stop.stop_id, result.stop.stop_name);
-                if(isPathfindingActive) processJourney(result.stop.latLng, true, result.stop.stop_id); else clearRoutes();
-            } else { if (isPathfindingActive) processJourney(e.latlng, false, null); }
+                if(isPathfindingActive) processJourney(result.stop.latLng, true, result.stop.stop_id);
+                else clearRoutes();
+            } else {
+                if (isPathfindingActive) processJourney(e.latlng, false, null);
+            }
         });
 
         function processJourney(destLatLng, isBusStop, stopId) {
@@ -369,8 +427,9 @@
             if(!endStop) { let n = findNearestStop(destLatLng); if(n.stop) endStop = n.stop; }
             var startStop = startData.stop;
 
-            if (isBusStop && endStop && endStop.marker) { endStop.marker.openPopup(); } 
-            else {
+            if (isBusStop && endStop && endStop.marker) {
+                endStop.marker.openPopup();
+            } else {
                 destinationMarker = L.marker(destLatLng, {icon: iconDestination}).addTo(map);
                 let msg = "Destination";
                 if(endStop) msg += "<br><span style='font-size:11px;color:#097C87'>Nearest Stop: " + endStop.stop_name + "</span>";
@@ -387,14 +446,16 @@
             var walkStyles = [ { color: '#6E8F72', opacity: 1, weight: 7, className: 'routing-line' }, { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10', className: 'routing-line' } ];
             var busStyles = [ { color: '#054A52', opacity: 0.8, weight: 8, className: 'routing-line' }, { color: '#23CED9', opacity: 1, weight: 4, className: 'routing-line' } ];
 
-            if (!useBus) { createRoute(userLatLng, destLatLng, walkStyles, 'walking'); } 
-            else {
+            if (!useBus) {
+                createRoute(userLatLng, destLatLng, walkStyles, 'walking');
+            } else {
                 if(startStop) { startStop.marker.setIcon(iconBusRed); startStop.marker.setZIndexOffset(1000); }
                 if(endStop) { endStop.marker.setIcon(iconBusRed); endStop.marker.setZIndexOffset(1000); }
                 createRoute(userLatLng, startStop.latLng, walkStyles, 'walking');
                 createRoute(startStop.latLng, endStop.latLng, busStyles, 'driving'); 
                 if (!isBusStop) createRoute(endStop.latLng, destLatLng, walkStyles, 'walking');
             }
+            
             var bounds = [userLatLng, destLatLng];
             if(startStop) bounds.push(startStop.latLng); if(endStop) bounds.push(endStop.latLng);
             map.fitBounds(L.latLngBounds(bounds), {padding: [100, 100]}); 
@@ -410,8 +471,10 @@
             routeControls.push(control);
         }
 
+        // --- TOGGLE BUTTON ---
         const toggleBtn = document.getElementById('toggle-label-btn');
         const mapWrapper = document.getElementById('map-wrapper');
+
         toggleBtn.addEventListener('click', function() {
             isPathfindingActive = !isPathfindingActive;
             if (!isPathfindingActive) {
@@ -427,6 +490,7 @@
             }
         });
 
+        // --- SEARCH ---
         const searchInput = document.getElementById('search-input');
         const searchDropdown = document.getElementById('search-results-dropdown');
         let debounceTimer;
@@ -459,10 +523,14 @@
             searchDropdown.style.display = 'none';
             const lat=parseFloat(item.lat||item.latitude); const lon=parseFloat(item.lon||item.longitude);
             const t=L.latLng(lat,lon);
+            
             if(type==='stop') { 
-                map.setView(t,16); openStopSidebar(item.stop_id,item.stop_name);
-                if(isPathfindingActive) processJourney(t,true,item.stop_id); else clearRoutes();
-            } else {
+                map.setView(t,16); 
+                openStopSidebar(item.stop_id,item.stop_name);
+                if(isPathfindingActive) processJourney(t,true,item.stop_id); 
+                else clearRoutes();
+            }
+            else {
                 if(!isPathfindingActive) return;
                 map.setView(t,16);
                 try {
