@@ -339,6 +339,7 @@
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
                         if (stopInfo) {
+                            console.log("Drawing Bus")
                             let busMarker = L.marker([stopInfo.lat, stopInfo.lon], {icon: iconLiveBus});
                             busMarker.bindPopup(`<b>Bus ${t.route_id}</b><br>Trip: ${t.trip_id}<br>Last Stop: ${stopInfo.name}`);
                             liveBusLayerGroup.addLayer(busMarker);

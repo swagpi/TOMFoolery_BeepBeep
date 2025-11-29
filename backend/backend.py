@@ -34,8 +34,11 @@ DB_FILE_NAME = "/database.db"
 def getDBPath() -> str:
     db_env: Optional[str] = os.getenv("DB_DIR")
     if db_env is None:
+        print("Found no environment variable")
         return "tomfoolery-rs-main/database.db"
     else:
+        db_path = db_env + DB_FILE_NAME
+        print(db_path)
         return db_env + DB_FILE_NAME
 
 DB_PATH = getDBPath() # Path to the DB created by Rust

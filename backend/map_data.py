@@ -6,6 +6,7 @@ def initialize_db(db_path: str):
     Creates tables and indexes if they don't exist.
     Run this once after building or recreating the database.
     """
+    print("attempting to open db at:",db_path)
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
 
