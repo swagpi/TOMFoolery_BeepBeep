@@ -103,7 +103,7 @@ def station_info_endpoint(stop_id: int):
 # Full Route Path for a specific Trip
 @app.get("/routes_for_stop")
 def routes_for_stop_api(stop_id: str):
-    print(f"🛣️ Route Request for stop_id={stop_id}")
+    # print(f"🛣️ Route Request for stop_id={stop_id}")
     try:
         data = get_routes_for_stop(stop_id)
         # pprint(data[:100])

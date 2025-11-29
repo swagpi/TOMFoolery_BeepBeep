@@ -1,17 +1,18 @@
 import sqlite3
-from typing import Optional
 import os
 
-DB_FILE_NAME: str = "/database.db"
+DB_FILE_NAME = "/database.db"
+
 def getDBPath() -> str:
-    db_env: Optional[str] = os.getenv("DB_DIR")
+    db_env: str | None = os.getenv("DB_DIR")
     if db_env is None:
+        print("Did not find ENV VAR")
         return "tomfoolery-rs-main/database.db"
     else:
+        print("Found ENV VAR")
         return db_env + DB_FILE_NAME
 
-DB_PATH = getDBPath()
-
+DB_PATH = getDBPath() # Path to the DB created by Rust
 
 def get_routes_for_stop(stop_id):
     conn = sqlite3.connect(DB_PATH)
@@ -112,6 +113,7 @@ def get_routes_for_stop(stop_id):
                 })
 
         current_real_stop = updates.get(trip_id)
+        print("Current: ", current_real_stop)
 
         results.append({
             "trip_id": trip_id,

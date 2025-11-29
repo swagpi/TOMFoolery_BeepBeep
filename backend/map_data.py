@@ -84,7 +84,7 @@ def update_live_data(database_path: str, rt_updates):
 
     with conn:
         cur.executemany(
-            "INSERT INTO trip_updates(schedule_status, trip_id, stop_id, arrival_delay, departure_delay) VALUES (?,?,?,?,?)",
+            "INSERT INTO trip_updates(trip_id, stop_id, arrival_delay, departure_delay) VALUES (?,?,?,?)",
             rt_updates[1]
         )
         cur.executemany(

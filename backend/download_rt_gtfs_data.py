@@ -35,27 +35,27 @@ def download_rt_gtfs_data(url: str="https://realtime.gtfs.de/realtime-free.pb"):
         if entity.HasField("trip_update"):
             tu = entity.trip_update
             for stu in tu.stop_time_update:
-                trip_updates.append({
-                    "trip_id": tu.trip.trip_id,
-                    "stop_id": stu.stop_id,
-                    "arrival_delay": stu.arrival.delay if stu.HasField("arrival") else None,
-                    "departure_delay": stu.departure.delay if stu.HasField("departure") else None,
-                })
+                trip_updates.append([
+                    tu.trip.trip_id,
+                    stu.stop_id,
+                    stu.arrival.delay if stu.HasField("arrival") else None,
+                    stu.departure.delay if stu.HasField("departure") else None,
+                ])
 
     alerts = []
 
     for entity in feed.entity:
         if entity.HasField("alert"):
             a = entity.alert
-            alerts.append({
-                "header": a.header_text.translation[0].text if a.header_text.translation else None,
-                "description": a.description_text.translation[0].text if a.description_text.translation else None,
-                "cause": a.cause,
-                "effect": a.effect,
-            })
+            alerts.append([
+                a.header_text.translation[0].text if a.header_text.translation else None,
+                a.description_text.translation[0].text if a.description_text.translation else None,
+                a.cause,
+                a.effect,
+            ])
 
-    print(len(vehicles), "\n", len(trip_updates), "\n", len(alerts), "\n")
-    print(trip_updates[:10])
+    # print(len(vehicles), "\n", len(trip_updates), "\n", len(alerts), "\n")
+    # print(trip_updates[:10])
 
     # Apparently no vehicle positions in german data
 
