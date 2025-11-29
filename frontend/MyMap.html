@@ -298,24 +298,15 @@
                     data.next_trips.sort((a, b) => parseInt(a.estimated_arrival||a.arrival_time) - parseInt(b.estimated_arrival||b.arrival_time));
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
-                        const routeName = trip.display_route_name || trip.route_id;
-                const headsign = trip.display_headsign || "Trip ID: " + trip.trip_id;
-
-                const item = document.createElement('div'); item.className = 'trip-card';
-                item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
-                
-                item.innerHTML = `
-                    <div class="trip-info">
-                        <span class="trip-route">${routeName}</span>
-                        <span class="trip-dest">${headsign}</span>
-                    </div>
-                    <div class="trip-time">${formatTime(timeStr)}</div>
-                `;
-                listEl.appendChild(item);
-            });
-        } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
-    } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
-}
+                        const item = document.createElement('div'); item.className = 'trip-card';
+                        // Click event to visualize trip route
+                        item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
+                        item.innerHTML = `<div class="trip-info"><span class="trip-route">${trip.display_route_name}</span><span class="trip-dest"> Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
+                        listEl.appendChild(item);
+                    });
+                } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
+            } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
+        }
 
         // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
@@ -350,6 +341,7 @@
 
                 tripsData.forEach(t => {
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
+                        console.log("drawing bus");
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
                         if (stopInfo) {
                             let busMarker = L.marker([stopInfo.lat, stopInfo.lon], {icon: iconLiveBus});
@@ -613,4 +605,3 @@
     </script>
 </body>
 </html>
-

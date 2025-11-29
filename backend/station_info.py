@@ -2,14 +2,15 @@ import sqlite3
 from typing import Dict
 from datetime import datetime, timedelta
 
-DB_PATH = "tomfoolery-rs-main/database.db"
+# DB_PATH = "tomfoolery-rs-main/database.db"
 
-def get_station_info(stop_id: str) -> Dict:
+def get_station_info(stop_id: int, db_path: str) -> Dict:
     """
     Fetch stop info and the next 100 trips including scheduled/estimated times,
     route short names, and trip headsigns.
     """
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(db_path)
+    print("Connected to database")
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
 
@@ -31,50 +32,48 @@ def get_station_info(stop_id: str) -> Dict:
     # Scheduled trips after current time
     # NOTE: We assume 'route' table and 'trip_headsign' column exist in your DB.
     # If your Rust importer didn't create them, this might need adjustment.
-    try:
-        cur.execute("""
-            SELECT 
-                t.trip_id, 
-                t.route_id, 
-                st.arrival_time, 
-                st.departure_time,
-                r.route_short_name,
-                r.route_long_name,
-                t.trip_headsign
-            FROM stoptime st
-            JOIN trip t ON st.trip_id = t.trip_id
-            LEFT JOIN route r ON t.route_id = r.route_id
-            WHERE st.stop_id = ?
-              AND st.arrival_time >= ?
-        """, (stop_id, now_hhmmss))
-        scheduled_trips_raw = [dict(row) for row in cur.fetchall()]
-    except sqlite3.OperationalError:
-        # Fallback if 'route' table or columns are missing
-        print("⚠️ Warning: 'route' table or columns missing. Falling back to basic query.")
-        cur.execute("""
-            SELECT trip_id, route_id, arrival_time, departure_time
-            FROM stoptime
-            WHERE stop_id = ? AND arrival_time >= ?
-        """, (stop_id, now_hhmmss))
-        scheduled_trips_raw = [dict(row) for row in cur.fetchall()]
+
+    cur.execute("""
+        SELECT trip_id, arrival_time, departure_time
+        FROM stoptime
+        WHERE stop_id = ? AND arrival_time >= ?
+    """, (stop_id, now_hhmmss))
+    scheduled_trips_raw = [dict(row) for row in cur.fetchall()]
+
+    trip_ids = []
+    for trip in scheduled_trips_raw:
+        trip_ids.append(trip["trip_id"])
+
+    trip_ids_substitution_string = ",".join("?" for _ in trip_ids)
+    print(trip_ids_substitution_string)
+
+    cur.execute(f"""
+    SELECT t.trip_id, r.route_short_name
+    FROM trip t
+    JOIN routes r ON t.route_id = r.route_id
+    WHERE t.trip_id IN ({trip_ids_substitution_string});
+    """, trip_ids)
+    
+    trip_id_route_name_list = cur.fetchall()
+
+    trip_to_shortname_dict = { trip_id: short for trip_id, short in trip_id_route_name_list }
 
     # Remove duplicate trips (keep first occurrence)
+
     seen_trip_ids = set()
     scheduled_trips = []
     for trip in scheduled_trips_raw:
+        trip_id = trip["trip_id"]
         if trip["trip_id"] not in seen_trip_ids:
             # --- LOGIC FOR DISPLAY NAMES ---
             # Route Name: Short > Long > ID
-            route_name = trip.get("route_short_name") or trip.get("route_long_name") or str(trip["route_id"])
-            
-            # Headsign: DB Headsign > "Trip ID"
-            headsign = trip.get("trip_headsign") or f"Trip {trip['trip_id']}"
+            # route_name = trip.get("route_short_name") or trip.get("route_long_name") or str(trip["route_id"])
 
-            trip["display_route_name"] = route_name
-            trip["display_headsign"] = headsign
-            
+            trip["display_route_name"] = trip_to_shortname_dict[trip_id]
             scheduled_trips.append(trip)
-            seen_trip_ids.add(trip["trip_id"])
+            seen_trip_ids.add(trip_id)
+
+
 
     # Live updates
     try:

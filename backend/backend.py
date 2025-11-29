@@ -34,11 +34,10 @@ DB_FILE_NAME = "/database.db"
 def getDBPath() -> str:
     db_env: Optional[str] = os.getenv("DB_DIR")
     if db_env is None:
-        print("Found no environment variable")
+        print("Did not find ENV VAR")
         return "tomfoolery-rs-main/database.db"
     else:
-        db_path = db_env + DB_FILE_NAME
-        print(db_path)
+        print("Found ENV VAR")
         return db_env + DB_FILE_NAME
 
 DB_PATH = getDBPath() # Path to the DB created by Rust
@@ -92,10 +91,10 @@ def search_stations_api(query: str, limit: int = 20):
 
 # Station Detail Info (Next Trips) - For Sidebar
 @app.get("/station_info")
-def station_info_endpoint(stop_id: str):
+def station_info_endpoint(stop_id: int):
     print(f"🚏 Station Info Request for ID: {stop_id}")
     try:
-        data = get_station_info(stop_id)
+        data = get_station_info(stop_id, DB_PATH)
         return data
     except Exception as e:
         print(f"❌ Error in /station_info: {e}")
@@ -107,7 +106,7 @@ def routes_for_stop_api(stop_id: str):
     print(f"🛣️ Route Request for stop_id={stop_id}")
     try:
         data = get_routes_for_stop(stop_id)
-        pprint(data[:100])
+        # pprint(data[:100])
         return data
     except Exception as e:
         print(f"❌ Error in /routes_for_stop: {e}")
