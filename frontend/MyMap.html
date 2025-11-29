@@ -10,11 +10,11 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* --- 🎨 PALETTE --- */
+        /* --- PALETTE --- */
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
-            --purple: #9B59B6; /* Live Bus Color */
+            --purple: #9B59B6; /* Live Bus & Scooter Color */
             --bg-gray: #f3f4f6;
         }
 
@@ -46,7 +46,7 @@
         .map-disabled { cursor: not-allowed !important; }
         .leaflet-routing-container { display: none; }
 
-        /* --- NEW LOGO STYLE --- */
+        /* Logo */
         .brand-logo {
             position: absolute; top: 20px; right: 26px; z-index: 9999;
             width: 180px; height: auto;
@@ -60,8 +60,8 @@
             background-color: #027361; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-family: 'ZTNature-Medium', sans-serif; font-weight: bold;}
-        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; background-color: #f2be4b; }
+        #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
+        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; }
 
         #search-results-dropdown {
             margin-top: 5px; width: 100%; background: white;
@@ -110,7 +110,7 @@
         .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
         .no-data { text-align: center; color: #999; margin-top: 20px; }
 
-        /* Custom Styles */
+        /* Icons */
         .custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
@@ -130,6 +130,16 @@
             display: flex; justify-content: center; align-items: center;
             color: white; font-size: 12px;
         }
+        
+        /* SCOOTER ICON STYLE (Small Purple Dot) */
+        .scooter-dot {
+            background-color: var(--purple);
+            border: 1px solid white;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            cursor: pointer;
+        }
+
 
         .stop-name-label {
             background-color: transparent; border: none; box-shadow: none;
@@ -142,10 +152,11 @@
         .leaflet-popup-tip-container { display: none; } 
         a.leaflet-popup-close-button { display: none; } 
 
-        /* --- HIDE LOGIC --- */
+        /* Hide Logic */
         .hide-routes .destination-pin { display: none !important; }
         .hide-routes .leaflet-routePane-pane { display: none !important; }
         .hide-routes .bus-live { display: none !important; }
+        .hide-routes .scooter-dot { display: none !important; }
 
     </style>
 </head>
@@ -192,12 +203,20 @@
         // --- STATE ---
         let isPathfindingActive = true; 
         let activeTripPolyline = null; 
+        
+        // --- LAYERS ---
+        var userLatLng = null;
+        var allStopsData = []; 
+        var stopsLayerGroup = null;
+        var liveBusLayerGroup = null;
+        var scooterLayerGroup = null;
 
         // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
         var iconLiveBus = L.divIcon({ className: 'custom-bus-icon bus-live', html: '🚌', iconSize: [26, 26], iconAnchor: [13, 13] });
+        var iconScooter = L.divIcon({ className: 'scooter-dot', html: '', iconSize: [10, 10], iconAnchor: [5, 5] });
         
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
@@ -211,18 +230,15 @@
         var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ attribution: '&copy; OpenStreetMap', noWrap: true }).addTo(map);
 
-        // Custom Pane for Routes
         map.createPane('routePane');
         map.getPane('routePane').style.zIndex = 399;
 
-        var userLatLng = null;
-        var allStopsData = []; 
-        var routeControls = []; 
-        var destinationMarker = null;
-        var userMarker = null;
-        var stopsLayerGroup = L.layerGroup().addTo(map);
-        var liveBusLayerGroup = L.layerGroup().addTo(map);
+        // Initialize Layers
+        stopsLayerGroup = L.layerGroup().addTo(map);
+        liveBusLayerGroup = L.layerGroup().addTo(map);
+        scooterLayerGroup = L.layerGroup().addTo(map);
 
+        // Geolocation
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
 
         function success(position) {
@@ -244,6 +260,28 @@
         
         function formatTime(t) { if(!t || t.length<4) return t; return t.substring(0,2)+":"+t.substring(2,4); }
 
+        // --- DISPLAY SCOOTER INFO IN SIDEBAR ---
+        function openScooterSidebar(scooter) {
+            const sidebar = document.getElementById('info-sidebar');
+            const titleEl = document.getElementById('sidebar-stop-name');
+            const listEl = document.getElementById('sidebar-list');
+
+            titleEl.textContent = "E-Scooter Details";
+            listEl.innerHTML = '';
+            sidebar.classList.add('open');
+
+            const content = `
+                <div class="trip-card" style="flex-direction: column; align-items: flex-start; gap: 8px; cursor: default;">
+                    <div style="font-weight:bold; font-size:16px; color:var(--purple)">${scooter.vehicle_id || 'Unknown ID'}</div>
+                    <div style="color:#666">Type: ${scooter.form_factor || 'Scooter'}</div>
+                    <div style="color:#666">Location: ${parseFloat(scooter.latitude).toFixed(5)}, ${parseFloat(scooter.longitude).toFixed(5)}</div>
+                    <div style="margin-top:5px; font-size:12px; color:#888;">Ready to ride</div>
+                </div>
+            `;
+            listEl.innerHTML = content;
+        }
+
+
         async function openStopSidebar(stopId, stopName) {
             const sidebar = document.getElementById('info-sidebar');
             const titleEl = document.getElementById('sidebar-stop-name');
@@ -259,7 +297,6 @@
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
                         const item = document.createElement('div'); item.className = 'trip-card';
-                        // Click event to visualize trip route
                         item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
                         item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
                         listEl.appendChild(item);
@@ -268,7 +305,6 @@
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
-        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
 
@@ -289,17 +325,9 @@
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
 
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
-                
-                activeTripPolyline = L.polyline(pathCoordinates, {
-                    color: 'var(--jade)', 
-                    weight: 6,
-                    opacity: 0.9,
-                    pane: 'routePane' 
-                }).addTo(map);
-
+                activeTripPolyline = L.polyline(pathCoordinates, { color: 'var(--jade)', weight: 6, opacity: 0.9, pane: 'routePane' }).addTo(map);
                 map.fitBounds(activeTripPolyline.getBounds(), {padding: [50, 50]});
 
-                // Draw Stops
                 targetTrip.full_route_stops.forEach(stop => {
                     let marker = L.marker([stop.lat, stop.lon], {icon: iconBusYellow});
                     marker.bindTooltip(stop.name, { permanent: true, direction: 'top', className: 'stop-name-label', offset: [0, -10] });
@@ -307,7 +335,6 @@
                     stopsLayerGroup.addLayer(marker);
                 });
 
-                // LIVE BUSES
                 tripsData.forEach(t => {
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
@@ -318,10 +345,7 @@
                         }
                     }
                 });
-
-            } catch(e) {
-                console.error("Error visualising trip:", e);
-            }
+            } catch(e) { console.error("Error visualising trip:", e); }
         }
 
         map.on('moveend', function() { 
@@ -330,6 +354,7 @@
             }
         });
 
+        // --- FETCH MAP DATA ---
         async function fetchMapDataFromBackend() {
             if(USE_MOCK_DATA || !isPathfindingActive) return;
             if (activeTripPolyline) return; 
@@ -342,8 +367,30 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/map_data`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
                 const data = await response.json();
-                if (data.type === "MapDataResponse" && data.payload && data.payload.stops) { updateMapWithBackendData(data.payload.stops); }
+                
+                if (data.type === "MapDataResponse" && data.payload) { 
+                    if(data.payload.stops) updateMapWithBackendData(data.payload.stops); 
+                    if(data.payload.escooters) updateScootersMap(data.payload.escooters); // NEW
+                }
             } catch (error) { console.error("Fetch error:", error); }
+        }
+
+        function updateScootersMap(scootersList) {
+            scooterLayerGroup.clearLayers();
+            scootersList.forEach(scooter => {
+                // Ensure lat/lon are defined
+                if (!scooter.latitude || !scooter.longitude) return;
+
+                let latLng = L.latLng(scooter.latitude, scooter.longitude);
+                let marker = L.marker(latLng, {icon: iconScooter});
+                
+                marker.on('click', (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    openScooterSidebar(scooter); // Open info on click
+                });
+
+                scooterLayerGroup.addLayer(marker);
+            });
         }
 
         function updateMapWithBackendData(stopsList) {
@@ -363,7 +410,7 @@
                              liveBusLayerGroup.clearLayers(); 
                              fetchMapDataFromBackend(); 
                         }
-                        processJourney(e.latlng, true, stopData.stop_id); 
+                        processJourney(e.latLng, true, stopData.stop_id); 
                     } else {
                         clearRoutes();
                     }
