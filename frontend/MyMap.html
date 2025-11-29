@@ -3,6 +3,9 @@
 <head>
     <meta charset="utf-8" />
     <title>Smart Efficiency Map - Beep Beep</title>
+
+    <link rel="icon" type="image/png" href="icon.png" />
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
 
@@ -10,11 +13,12 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* --- PALETTE --- */
+        /* --- 🎨 PALETTE --- */
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
-            --purple: #9B59B6; --bg-gray: #f3f4f6;
+            --purple: #9B59B6; /* Live Bus Color */
+            --bg-gray: #f3f4f6;
         }
 
         @font-face {
@@ -45,7 +49,7 @@
         .map-disabled { cursor: not-allowed !important; }
         .leaflet-routing-container { display: none; }
 
-        /* Logo */
+        /* --- NEW LOGO STYLE --- */
         .brand-logo {
             position: absolute; top: 20px; right: 26px; z-index: 9999;
             width: 180px; height: auto;
@@ -59,8 +63,8 @@
             background-color: #027361; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
-        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; }
+        #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; font-family: 'ZTNature-Medium', sans-serif; font-weight: bold;}
+        #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; background-color: #f2be4b; }
 
         #search-results-dropdown {
             margin-top: 5px; width: 100%; background: white;
@@ -109,7 +113,7 @@
         .trip-time { font-weight: bold; color: var(--teal); background: var(--bg-gray); padding: 6px 12px; border-radius: 8px; }
         .no-data { text-align: center; color: #999; margin-top: 20px; }
 
-        /* Icons */
+        /* Custom Styles */
         .custom-bus-icon { border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); box-sizing: border-box; }
         .bus-active { background-color: var(--coral); }
         .bus-passive { background-color: var(--sun); }
@@ -139,7 +143,6 @@
             cursor: pointer;
         }
 
-
         .stop-name-label {
             background-color: transparent; border: none; box-shadow: none;
             font-size: 11px; font-weight: bold; color: #333;
@@ -151,7 +154,7 @@
         .leaflet-popup-tip-container { display: none; } 
         a.leaflet-popup-close-button { display: none; } 
 
-        /* Hide Logic */
+        /* --- HIDE LOGIC --- */
         .hide-routes .destination-pin { display: none !important; }
         .hide-routes .leaflet-routePane-pane { display: none !important; }
         .hide-routes .bus-live { display: none !important; }
@@ -202,13 +205,6 @@
         // --- STATE ---
         let isPathfindingActive = true; 
         let activeTripPolyline = null; 
-        
-        // --- LAYERS ---
-        var userLatLng = null;
-        var allStopsData = []; 
-        var stopsLayerGroup = null;
-        var liveBusLayerGroup = null;
-        var scooterLayerGroup = null;
 
         // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
@@ -223,14 +219,21 @@
             iconSize: [36, 48], iconAnchor: [18, 48], popupAnchor: [0, -20] 
         });
 
-        function createUserMarker(latlng) { return L.circleMarker(latlng, { radius: 9, fillColor: "#2196F3", color: "#FFF", weight: 3, fillOpacity: 1 }); }
+        function createUserMarker(latlng) { return L.circleMarker(latlng, { radius: 9, fillColor: "#4458af", color: "#FFF", weight: 3, fillOpacity: 1 }); }
 
         // --- MAP SETUP ---
         var map = L.map('map', { dragging: true, tap: true, zoomControl: false }).setView([50.99955, 8.00122], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',{ attribution: '&copy; OpenStreetMap', noWrap: true }).addTo(map);
 
+        // Custom Pane for Routes
         map.createPane('routePane');
         map.getPane('routePane').style.zIndex = 399;
+
+        var userLatLng = null;
+        var allStopsData = []; 
+        var routeControls = []; 
+        var destinationMarker = null;
+        var userMarker = null;
 
         // Initialize Layers
         stopsLayerGroup = L.layerGroup().addTo(map);
@@ -281,7 +284,6 @@
             listEl.innerHTML = content;
         }
 
-
         async function openStopSidebar(stopId, stopName) {
             const sidebar = document.getElementById('info-sidebar');
             const titleEl = document.getElementById('sidebar-stop-name');
@@ -296,27 +298,26 @@
                     data.next_trips.sort((a, b) => parseInt(a.estimated_arrival||a.arrival_time) - parseInt(b.estimated_arrival||b.arrival_time));
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
-                        
-                        // Use new display fields
                         const routeName = trip.display_route_name || trip.route_id;
-                        const headsign = trip.display_headsign || "Trip ID: " + trip.trip_id; // Use Trip ID as fallback
+                const headsign = trip.display_headsign || "Trip ID: " + trip.trip_id;
 
-                        const item = document.createElement('div'); item.className = 'trip-card';
-                        item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
-                        
-                        item.innerHTML = `
-                            <div class="trip-info">
-                                <span class="trip-route">${routeName}</span>
-                                <span class="trip-dest">${headsign}</span>
-                            </div>
-                            <div class="trip-time">${formatTime(timeStr)}</div>
-                        `;
-                        listEl.appendChild(item);
-                    });
-                } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
-            } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
-        }
+                const item = document.createElement('div'); item.className = 'trip-card';
+                item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
+                
+                item.innerHTML = `
+                    <div class="trip-info">
+                        <span class="trip-route">${routeName}</span>
+                        <span class="trip-dest">${headsign}</span>
+                    </div>
+                    <div class="trip-time">${formatTime(timeStr)}</div>
+                `;
+                listEl.appendChild(item);
+            });
+        } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
+    } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
+}
 
+        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
 
@@ -401,7 +402,6 @@
                 scooterLayerGroup.addLayer(marker);
             });
         }
-
 
         function updateMapWithBackendData(stopsList) {
             stopsLayerGroup.clearLayers(); allStopsData = []; 
@@ -500,8 +500,20 @@
                 if (distDirect > ABSOLUTE_MIN_WALK && distDirect > (d1+d2)) useBus = true;
             }
 
-            var walkStyles = [ { color: '#6E8F72', opacity: 1, weight: 7, className: 'routing-line' }, { color: '#A1CCA6', opacity: 1, weight: 4, lineCap: 'round', dashArray: '1, 10', className: 'routing-line' } ];
-            var busStyles = [ { color: '#054A52', opacity: 0.8, weight: 8, className: 'routing-line' }, { color: '#23CED9', opacity: 1, weight: 4, className: 'routing-line' } ];
+            var walkStyles = [ 
+                 // 1. The Border (Thicker, Darker)
+                { color: '#027361', opacity: 1, weight: 10, className: 'routing-line-border' }, 
+                // 2. The Fill (Thinner, Lighter)
+                { color: '#A1CCA6', opacity: 1, weight: 6, className: 'routing-line-fill' } 
+            ];
+
+            // BUS STYLE (Using the same logic, or you can vary the inner color)
+            var busStyles = [ 
+                 // 1. The Border
+                { color: '#027361', opacity: 1, weight: 10, className: 'routing-line-border' }, 
+                // 2. The Fill (You can keep this Aqua to distinguish driving, or change to #A1CCA6 too)
+                { color: '#23CED9', opacity: 1, weight: 6, className: 'routing-line-fill' } 
+            ];
 
             if (!useBus) {
                 createRoute(userLatLng, destLatLng, walkStyles, 'walking');
@@ -601,3 +613,4 @@
     </script>
 </body>
 </html>
+
