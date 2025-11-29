@@ -55,15 +55,11 @@
 
         /* Controls */
         .map-toolbar-container { position: absolute; top: 20px; left: 20px; z-index: 9999; width: 340px; }
-        
         .map-toolbar {
             display: flex; gap: 8px; padding: 8px;
-            /* --- COLOR CHANGE HERE --- */
-            background-color: #027361; 
-            border-radius: 8px;
+            background-color: var(--jade); border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
-        
         #search-input { flex: 1; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; outline: none; }
         #search-btn { width: 45px; cursor: pointer; border-radius: 10px; border: 1px solid #ccc; }
 
@@ -196,24 +192,13 @@
         // --- STATE ---
         let isPathfindingActive = true; 
         let activeTripPolyline = null; 
-        
-        // --- LIVE TRACKING STATE ---
-        let liveTrackingInterval = null;
-        let liveBusLayerGroup = null;
 
         // --- ICONS ---
         var iconBusRed = L.divIcon({ className: 'custom-bus-icon bus-active', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusGray = L.divIcon({ className: 'custom-bus-icon bus-passive', html: '', iconSize: [20, 20], iconAnchor: [10, 10] });
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
+        var iconLiveBus = L.divIcon({ className: 'custom-bus-icon bus-live', html: '🚌', iconSize: [26, 26], iconAnchor: [13, 13] });
         
-        // LIVE BUS ICON
-        var iconLiveBus = L.divIcon({ 
-            className: 'custom-bus-icon bus-live', 
-            html: '🚌', // Simple bus emoji or SVG
-            iconSize: [26, 26], 
-            iconAnchor: [13, 13] 
-        });
-
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
             html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, 
@@ -283,7 +268,7 @@
             } catch (e) { listEl.innerHTML = '<div class="no-data">Error loading data.</div>'; }
         }
 
-        // --- VISUALIZE TRIP & START LIVE TRACKING ---
+        // --- VISUALIZE TRIP & SHOW LIVE BUSES ---
         async function visualizeTrip(stopId, tripId) {
             if (!isPathfindingActive) return; 
 
@@ -300,7 +285,7 @@
 
                 clearRoutes(); 
                 stopsLayerGroup.clearLayers(); 
-                liveBusLayerGroup.clearLayers(); 
+                liveBusLayerGroup.clearLayers();
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
 
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
@@ -322,7 +307,7 @@
                     stopsLayerGroup.addLayer(marker);
                 });
 
-                // Draw live buses from 'last_known_stop' if available
+                // LIVE BUSES
                 tripsData.forEach(t => {
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
@@ -373,7 +358,6 @@
                     openStopSidebar(stopData.stop_id, stopData.stop_name);
                     
                     if (isPathfindingActive) {
-                        // If we are in "Trip View", clicking another stop should reset and calculate route
                         if (activeTripPolyline) {
                              if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
                              liveBusLayerGroup.clearLayers(); 
