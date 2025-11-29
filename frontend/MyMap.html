@@ -14,8 +14,7 @@
         :root {
             --coral: #FCA47C; --sun: #F9D779; --aqua: #23CED9;
             --jade: #A1CCA6; --teal: #097C87; --dark-teal: #054A52;
-            --purple: #9B59B6; /* Live Bus & Scooter Color */
-            --bg-gray: #f3f4f6;
+            --purple: #9B59B6; --bg-gray: #f3f4f6;
         }
 
         @font-face {
@@ -130,7 +129,7 @@
             display: flex; justify-content: center; align-items: center;
             color: white; font-size: 12px;
         }
-        
+
         /* SCOOTER ICON STYLE (Small Purple Dot) */
         .scooter-dot {
             background-color: var(--purple);
@@ -217,7 +216,7 @@
         var iconBusYellow = L.divIcon({ className: 'custom-bus-icon bus-route-stop-yellow', html: '', iconSize: [16, 16], iconAnchor: [8, 8] });
         var iconLiveBus = L.divIcon({ className: 'custom-bus-icon bus-live', html: '🚌', iconSize: [26, 26], iconAnchor: [13, 13] });
         var iconScooter = L.divIcon({ className: 'scooter-dot', html: '', iconSize: [10, 10], iconAnchor: [5, 5] });
-        
+
         var iconDestination = L.divIcon({ 
             className: 'destination-pin', 
             html: `<svg width="36" height="48" viewBox="0 0 30 42" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0px 3px 3px rgba(0,0,0,0.3));"><path d="M15 0C6.71573 0 0 6.71573 0 15C0 26.25 15 42 15 42C15 42 30 26.25 30 15C30 6.71573 23.2843 0 15 0Z" fill="#E74C3C" stroke="white" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="white"/></svg>`, 
@@ -238,7 +237,6 @@
         liveBusLayerGroup = L.layerGroup().addTo(map);
         scooterLayerGroup = L.layerGroup().addTo(map);
 
-        // Geolocation
         navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true });
 
         function success(position) {
@@ -266,16 +264,18 @@
             const titleEl = document.getElementById('sidebar-stop-name');
             const listEl = document.getElementById('sidebar-list');
 
-            titleEl.textContent = "E-Scooter Details";
+            titleEl.textContent = "SCOOTER"; // Updated Title
             listEl.innerHTML = '';
             sidebar.classList.add('open');
+            
+            // Assume "Range" is 5-20km if battery level isn't available
+            const range = scooter.battery_level ? `${scooter.battery_level}% Battery` : 'Approx. 15 km Range';
 
             const content = `
-                <div class="trip-card" style="flex-direction: column; align-items: flex-start; gap: 8px; cursor: default;">
-                    <div style="font-weight:bold; font-size:16px; color:var(--purple)">${scooter.vehicle_id || 'Unknown ID'}</div>
-                    <div style="color:#666">Type: ${scooter.form_factor || 'Scooter'}</div>
-                    <div style="color:#666">Location: ${parseFloat(scooter.latitude).toFixed(5)}, ${parseFloat(scooter.longitude).toFixed(5)}</div>
-                    <div style="margin-top:5px; font-size:12px; color:#888;">Ready to ride</div>
+                <div class="trip-card" style="flex-direction: column; align-items: flex-start; gap: 8px; cursor: default; border-left-color: var(--purple);">
+                    <div style="font-weight:bold; font-size:16px; color:var(--purple)">${scooter.vehicle_id || 'Unknown Scooter'}</div>
+                    <div style="color:#666">Range: ${range}</div>
+                    <div style="margin-top:5px; font-weight:bold; color:var(--dark-teal);">READY TO RIDE</div>
                 </div>
             `;
             listEl.innerHTML = content;
@@ -296,9 +296,21 @@
                     data.next_trips.sort((a, b) => parseInt(a.estimated_arrival||a.arrival_time) - parseInt(b.estimated_arrival||b.arrival_time));
                     data.next_trips.forEach(trip => {
                         const timeStr = trip.estimated_arrival || trip.arrival_time; 
+                        
+                        // Use new display fields
+                        const routeName = trip.display_route_name || trip.route_id;
+                        const headsign = trip.display_headsign || "Trip ID: " + trip.trip_id; // Use Trip ID as fallback
+
                         const item = document.createElement('div'); item.className = 'trip-card';
                         item.onclick = () => visualizeTrip(stopId, trip.trip_id); 
-                        item.innerHTML = `<div class="trip-info"><span class="trip-route">Bus ${trip.route_id}</span><span class="trip-dest">Trip: ${trip.trip_id}</span></div><div class="trip-time">${formatTime(timeStr)}</div>`;
+                        
+                        item.innerHTML = `
+                            <div class="trip-info">
+                                <span class="trip-route">${routeName}</span>
+                                <span class="trip-dest">${headsign}</span>
+                            </div>
+                            <div class="trip-time">${formatTime(timeStr)}</div>
+                        `;
                         listEl.appendChild(item);
                     });
                 } else { listEl.innerHTML = '<div class="no-data">No upcoming trips.</div>'; }
@@ -321,7 +333,7 @@
 
                 clearRoutes(); 
                 stopsLayerGroup.clearLayers(); 
-                liveBusLayerGroup.clearLayers();
+                liveBusLayerGroup.clearLayers(); 
                 if(activeTripPolyline) { map.removeLayer(activeTripPolyline); activeTripPolyline = null; }
 
                 const pathCoordinates = targetTrip.full_route_stops.map(s => [s.lat, s.lon]);
@@ -339,7 +351,6 @@
                     if (t.last_known_stop && t.route_id === targetTrip.route_id) {
                         const stopInfo = targetTrip.full_route_stops.find(s => s.stop_id == t.last_known_stop);
                         if (stopInfo) {
-                            console.log("Drawing Bus")
                             let busMarker = L.marker([stopInfo.lat, stopInfo.lon], {icon: iconLiveBus});
                             busMarker.bindPopup(`<b>Bus ${t.route_id}</b><br>Trip: ${t.trip_id}<br>Last Stop: ${stopInfo.name}`);
                             liveBusLayerGroup.addLayer(busMarker);
@@ -355,7 +366,6 @@
             }
         });
 
-        // --- FETCH MAP DATA ---
         async function fetchMapDataFromBackend() {
             if(USE_MOCK_DATA || !isPathfindingActive) return;
             if (activeTripPolyline) return; 
@@ -368,10 +378,9 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/map_data`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(requestBody) });
                 const data = await response.json();
-                
                 if (data.type === "MapDataResponse" && data.payload) { 
                     if(data.payload.stops) updateMapWithBackendData(data.payload.stops); 
-                    if(data.payload.escooters) updateScootersMap(data.payload.escooters); // NEW
+                    if(data.payload.escooters) updateScootersMap(data.payload.escooters);
                 }
             } catch (error) { console.error("Fetch error:", error); }
         }
@@ -379,7 +388,6 @@
         function updateScootersMap(scootersList) {
             scooterLayerGroup.clearLayers();
             scootersList.forEach(scooter => {
-                // Ensure lat/lon are defined
                 if (!scooter.latitude || !scooter.longitude) return;
 
                 let latLng = L.latLng(scooter.latitude, scooter.longitude);
@@ -387,12 +395,13 @@
                 
                 marker.on('click', (e) => {
                     L.DomEvent.stopPropagation(e);
-                    openScooterSidebar(scooter); // Open info on click
+                    openScooterSidebar(scooter); 
                 });
 
                 scooterLayerGroup.addLayer(marker);
             });
         }
+
 
         function updateMapWithBackendData(stopsList) {
             stopsLayerGroup.clearLayers(); allStopsData = []; 
@@ -411,7 +420,7 @@
                              liveBusLayerGroup.clearLayers(); 
                              fetchMapDataFromBackend(); 
                         }
-                        processJourney(e.latLng, true, stopData.stop_id); 
+                        processJourney(e.latlng, true, stopData.stop_id); 
                     } else {
                         clearRoutes();
                     }
