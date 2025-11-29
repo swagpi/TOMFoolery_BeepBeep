@@ -138,7 +138,16 @@ def handle_map_update_request(db_path, bounds, max_stops=100):
     stop_ids_in_area = {s["stop_id"] for s in stops}
     routes = []
 
-    return {"type": "MapDataResponse", "payload": {"stops": stops, "routes": routes}}
+    cur.execute("""
+        SELECT vehicle_id, lat AS latitude, lon AS longitude, form_factor
+        FROM other_vehicles
+        WHERE lat BETWEEN ? AND ?
+          AND lon BETWEEN ? AND ?
+    """, (south, north, west, east))
+    escooters = [dict(row) for row in cur.fetchall()]
+    print(escooters)
+
+    return {"type": "MapDataResponse", "payload": {"stops": stops, "routes": routes, "escooters": escooters}}
 
     # Temp table for sampled stops
     cur.execute("CREATE TEMP TABLE tmp_stops(stop_id INT)")
